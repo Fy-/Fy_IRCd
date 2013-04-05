@@ -116,9 +116,9 @@ def userhost(target, params):
   else:
     user = User.by_nickname(params[0])
     if user:
-      target.send('302 %s :%s=%s', (target.get_user().nickname, user.nickname, user))
+      target.send('302 %s :%s=%s' % (target.get_user().nickname, user.nickname, user))
     else:
-      target.send('302 %s :', (target.get_user().nickname))
+      target.send('302 %s :' % (target.get_user().nickname))
 
 def whois(target, params):
   if len(params) == 0:
