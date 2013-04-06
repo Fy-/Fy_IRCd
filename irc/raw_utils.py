@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from models import User, Channel
+from tools import _lower
 import hashlib, config
 
 def _create_user(target):
@@ -14,16 +15,15 @@ def _create_user(target):
   return user
 
 def _create_channel(name):
-  print name, config.Channel.re_name.match(name)
   if not config.Channel.re_name.match(name):
     return False
 
-  if Channel.get(name) == False:
-    channel = Channel(name)
+  if Channel.get(_lower(name)) == False:
+    channel = Channel(_lower(name))
     channel.save()
     return channel
   else:
-    return Channel.get(name)
+    return Channel.get(_lower(name))
 
 def _split_string_512(str):
   i = 0

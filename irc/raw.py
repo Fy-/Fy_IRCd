@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from models import Client, User, Channel
 import raw_error, raw_init, raw_utils
+from tools import _lower
 import config, time
 
 """
@@ -20,7 +21,7 @@ def join(target, params):
           target.get_user().join(channel)
           names(target, [tmp])
         else:
-          raw_error._403(target, params[0])
+          raw_error._403(target, tmp)
     else:
       channel = raw_utils._create_channel(params[0])
       if channel:
@@ -35,21 +36,21 @@ def part(target, params):
   else:
     if ',' in params[0]:
       for tmp in params[0].split(','):
-        channel = raw_utils._create_channel(tmp)
+        channel = Channel.get(_lower(tmp))
         if channel:
           target.get_user().part(channel)
         else:
-          raw_error._403(target, params[0])
+          raw_error._403(target, tmp)
     else:
-      channel = raw_utils._create_channel(params[0])
+      channel = Channel.get(_lower(params[0]))
       if channel:
         target.get_user().part(channel)
       else:
         raw_error._403(target, params[0])
 
 def names(target, params):
-  if Channel.get(params[0]) != False:
-    channel = Channel.get(params[0])
+  channel = Channel.get(_lower(params[0]))
+  if channel:
     user_list = ''
     for user in channel.users:
       user_list += ' ' + user.nickname
@@ -69,8 +70,8 @@ def privmsg(target, params, cmd='PRIVMSG'):
     raw_error._411(target)
   else:
     if '#' in params[0]:
-      if Channel.get(params[0]) != False:
-        channel = Channel.get(params[0])
+      channel = Channel.get(_lower(params[0]))
+      if channel:
         for user in channel.users:
           if user != target.get_user():
             user.get_client().msg(':%s %s %s :%s' % (target.get_user(), cmd, params[0], params[1]))

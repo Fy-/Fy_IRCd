@@ -62,7 +62,7 @@ class User(BaseModel):
       channel.part(self)
 
   def quit(self):
-    del User.nickname_to_user[self.nickname]
+    del User.nickname_to_user[_lower(self.nickname)]
 
     for channel in self.channels:
       channel.part(self)
