@@ -9,7 +9,6 @@ def create_chain(file_paths):
   word1 = "\n"
   word2 = "\n"
   for path in file_paths:
-    print path
     with open(path) as file:
       for line in file:
         for current_word in line.split():
