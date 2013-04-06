@@ -1,8 +1,19 @@
 # -*- coding: utf-8 -*-
 from models import Client
 from irc import Message
-from gevent import socket 
-import tools, time
+import tools, time, gevent
+
+def aliveness(socket, address):
+  while 42:
+    gevent.sleep(10)
+    
+    now = time.time()
+    Client.by_socket(socket, address).check_aliveness()
+
+    if not Client.exists(socket):
+      break
+
+    
 
 class Sockets(object):
   @staticmethod
@@ -27,15 +38,15 @@ class Sockets(object):
     sfile  = socket.makefile('rw')
     tools.log.info('New client %s' % Client.by_socket(socket, address))
 
-    while True:
+    gevent.Greenlet.spawn(aliveness, socket, address)
+
+    while 42:
       line = sfile.readline()
 
       if not line:
         break
       else:
-        Client.by_socket(socket, address).check_aliveness()
-        
         raw, params = Message.from_string(line)
         message = Message(Client.by_socket(socket, address), raw=raw, params=params)
-    
+      
     Sockets.close(Client.by_socket(socket, address))

@@ -15,9 +15,11 @@ class Client(BaseModel):
     self.timestamp    = None
 
   def update_aliveness(self, timestamp):
-    if timestamp == self.timestamp:
+    if int(timestamp) == int(self.timestamp):
       self.timestamp = int(time.time())
       self.sent_ping = False
+
+    self.save()
 
   def check_aliveness(self):
     now = int(time.time())
@@ -26,15 +28,16 @@ class Client(BaseModel):
       if self.timestamp + 180 < now:
         self.disconnect()
 
-      if self.timestamp + 45 < now:
-        if not self.sent_ping:
+      if self.timestamp + 5 < now:
+        if self.sent_ping == False:
           self.msg('PING :%s' % self.timestamp)
           self.sent_ping = True 
 
     else:
-      self.sent_ping = True
       self.timestamp = now
+      self.sent_ping = True
       self.msg('PING :%s' % now)
+    self.save()
 
   def write(self, to_send):
     tools.log.debug(' >>> ' + to_send)
