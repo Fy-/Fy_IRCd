@@ -19,7 +19,7 @@ def _create_channel(name):
     return False
 
   if Channel.get(_lower(name)) == False:
-    channel = Channel(_lower(name))
+    channel = Channel(name)
     channel.save()
     return channel
   else:
