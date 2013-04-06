@@ -2,20 +2,20 @@
 from models import User, Channel
 from tools import _lower
 from libs.markov import construct_sentence
-import hashlib, config, gevent, socket
+from gevent.dns import resolve_reverse
+from socket import inet_aton
+import hashlib, config, socket
 
 def _reverse(ip):
-  packed_ip = socket.inet_aton(ip)
+  packed_ip = inet_aton(ip)
   try:
-    return gevent.dns.resolve_reverse(packed_ip)
+    return resolve_reverse(packed_ip)[1]
   except:
     return ip
 
 def _hostname(reverse):
   reverse = reverse.strip('.')
   tmp = reverse.split('.', 2)
-
-  print tmp
   return construct_sentence(slug=True) + '.' + tmp[2]
 
 def _create_user(target):
