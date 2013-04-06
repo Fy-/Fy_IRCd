@@ -1,4 +1,4 @@
-FyIRCd
+FyIRCd (Python IRC Server)
 ======
 
 Why choose to make an IRC Server…? Cause I can ^_^ (gtfo :3)
