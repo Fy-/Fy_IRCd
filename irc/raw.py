@@ -52,7 +52,10 @@ def names(target, params):
       target.send('353 %s = %s :%s' % (target.get_user().nickname, params[0], message.strip(' ')))
     target.send('366 %s %s :End of /NAMES list.' % (target.get_user().nickname, params[0]))
 
-def privmsg(target, params):
+def notice(target, params):
+  privmsg(target, params, 'NOTICE') 
+
+def privmsg(target, params, cmd='PRIVMSG'):
   if len(params) == 1:
     raw_error._412(target)
   elif len(params) == 0:
@@ -63,7 +66,7 @@ def privmsg(target, params):
         channel = Channel.get(params[0])
         for user in channel.users:
           if user != target.get_user():
-            user.get_client().msg(':%s PRIVMSG %s :%s' % (target.get_user(), params[0], params[1]))
+            user.get_client().msg(':%s %s %s :%s' % (target.get_user(), cmd, params[0], params[1]))
       else:
         raw_error._401(target, params[0])
     else:
@@ -71,7 +74,7 @@ def privmsg(target, params):
         source = target.get_user()
         to     = User.by_nickname(params[0]).get_client()
         client = User.by_nickname(params[0]).get_client()
-        client.msg(':%s PRIVMSG %s :%s' % (source, params[0], params[1]))
+        client.msg(':%s %s %s :%s' % (source, cmd, params[0], params[1]))
       except:
         raw_error._401(target, params[0])
 """
