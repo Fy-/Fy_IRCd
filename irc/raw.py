@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from models import Client, User, Channel
-import raw_error, raw_init, raw_utils
 from tools import _lower
+from plugins.core import raw_callback
+
+import raw_error, raw_init, raw_utils
 import config, time
 
 """
@@ -73,6 +75,9 @@ def privmsg(target, params, cmd='PRIVMSG'):
   elif len(params) == 0:
     raw_error._411(target)
   else:
+    if raw_callback.get(cmd):
+      params = raw_callback[cmd](params)
+
     if '#' in params[0]:
       channel = Channel.get(_lower(params[0]))
       if channel:
