@@ -36,6 +36,14 @@ def construct_sentence(word_count=5, slug=False):
     return slugify(generated_sentence)
   return generated_sentence
 
+def specials(s):
+  s = s.replace(':', '')
+  s = s.replace(';', '')
+  s = s.replace('!', '')
+  s = s.replace('?', '')
+
+  return s
+
 def rep_accent(input_str):
   nkfd_form = unicodedata.normalize('NFKD', unicode(input_str, 'utf8'))
   return u"".join([c for c in nkfd_form if not unicodedata.combining(c)])
@@ -47,5 +55,5 @@ def slugify(text, delim=u'.'):
   result = []
   for word in _punct_re.split(text.lower()):
       result.extend(word.split())
-  return unicode(delim.join(result))
+  return specials(unicode(delim.join(result)))  
 

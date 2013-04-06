@@ -16,7 +16,7 @@ def _reverse(ip):
 def _hostname(reverse):
   reverse = reverse.strip('.')
   tmp = reverse.split('.', 2)
-  return construct_sentence(slug=True) + '.' + tmp[2]
+  return construct_sentence(word_count=4, slug=True) + '.' + tmp[2]
 
 def _create_user(target):
   chash = hashlib.sha224(str(target.socket_file)).hexdigest() 

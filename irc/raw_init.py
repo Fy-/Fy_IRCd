@@ -14,8 +14,6 @@ def _welcome(target):
 
     _send_motd(target, user)
 
-    target.msg('PING :%s' % config.Server.name)
-
     user.welcome  = True
     user.save()
 

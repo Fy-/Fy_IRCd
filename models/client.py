@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from models import BaseModel, Error
 from gevent import socket 
-import config, gevent, tools
+import config, gevent, tools, time
 
 class Client(BaseModel):
   def __init__(self, socket, address, **kwargs):
@@ -10,6 +10,31 @@ class Client(BaseModel):
     self.socket_file  = socket.makefile('rw')
     self._user        = None
     self.dropped      = False
+
+    self.sent_ping    = False
+    self.timestamp    = None
+
+  def update_aliveness(self, timestamp):
+    if timestamp == self.timestamp:
+      self.timestamp = int(time.time())
+      self.sent_ping = False
+
+  def check_aliveness(self):
+    now = int(time.time())
+    
+    if self.timestamp:
+      if self.timestamp + 180 < now:
+        self.disconnect()
+
+      if self.timestamp + 45 < now:
+        if not self.sent_ping:
+          self.msg('PING :%s' % self.timestamp)
+          self.sent_ping = True 
+
+    else:
+      self.sent_ping = True
+      self.timestamp = now
+      self.msg('PING :%s' % now)
 
   def write(self, to_send):
     tools.log.debug(' >>> ' + to_send)

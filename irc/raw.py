@@ -99,10 +99,11 @@ def ison(target, params):
   target.send('303 %s :%s' % (target.get_user().nickname, user_list.strip()))
 
 def ping(target, params):
+  target.update_aliveness(target.timestamp)
   target.send('PONG %s :%s' % (config.Server.name, params[0]))
 
 def pong(target, params):
-  pass
+  target.update_aliveness(params[0])
 
 def quit(target, params):
   target.disconnect()

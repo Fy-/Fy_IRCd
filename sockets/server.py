@@ -2,7 +2,7 @@
 from models import Client
 from irc import Message
 from gevent import socket 
-import tools
+import tools, time
 
 class Sockets(object):
   @staticmethod
@@ -33,6 +33,8 @@ class Sockets(object):
       if not line:
         break
       else:
+        Client.by_socket(socket, address).check_aliveness()
+        
         raw, params = Message.from_string(line)
         message = Message(Client.by_socket(socket, address), raw=raw, params=params)
     
