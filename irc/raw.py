@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from models import Client, User, Channel
-import raw_error,raw_init,raw_utils
+import raw_error, raw_init, raw_utils
 import config, time
 
 """
@@ -10,20 +10,24 @@ def _unknown(target, raw, params):
   pass
 
 def join(target, params):
-  # Multiple join?
   if '#' not in params[0]:
     raw_error._403(target, params[0])
   else:
     if ',' in params[0]:
       for tmp in params[0].split(','):
         channel = raw_utils._create_channel(tmp)
-        target.get_user().join(channel)
-        names(target, [tmp])
+        if channel:
+          target.get_user().join(channel)
+          names(target, [tmp])
+        else:
+          raw_error._403(target, params[0])
     else:
-      tmp = params[0]
-      channel = raw_utils._create_channel(tmp)
-      target.get_user().join(channel)
-      names(target, [tmp])     
+      channel = raw_utils._create_channel(params[0])
+      if channel:
+        target.get_user().join(channel)
+        names(target, params)
+      else:
+        raw_error._403(target, params[0])
 
 def part(target, params):
   if '#' not in params[0]:
@@ -34,11 +38,14 @@ def part(target, params):
         channel = raw_utils._create_channel(tmp)
         if channel:
           target.get_user().part(channel)
+        else:
+          raw_error._403(target, params[0])
     else:
-      tmp = params[0]
-      channel = raw_utils._create_channel(tmp)
+      channel = raw_utils._create_channel(params[0])
       if channel:
         target.get_user().part(channel)
+      else:
+        raw_error._403(target, params[0])
 
 def names(target, params):
   if Channel.get(params[0]) != False:
@@ -77,6 +84,7 @@ def privmsg(target, params, cmd='PRIVMSG'):
         client.msg(':%s %s %s :%s' % (source, cmd, params[0], params[1]))
       except:
         raw_error._401(target, params[0])
+
 """
   User command
 """
@@ -140,6 +148,8 @@ def nick(target, params):
 
   if User.by_nickname(params[0]) != False:
     raw_error._433(target, params[0])
+  elif not config.User.re_nick.match(params[0]):
+    raw_error._432(target, params[0])
   else:
     if user.welcome:
       user.send_all(':%s NICK :%s' % (user, params[0]))

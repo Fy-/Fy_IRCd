@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from models import BaseModel, Error
+from tools import _lower
 
 class Channel(BaseModel):
   def __init__(self, name, **kwargs):
@@ -25,7 +26,7 @@ class Channel(BaseModel):
       cuser.get_client().msg(':%s PART %s' % (user, self.name))
 
   def get_key(self):
-    return self.name
+    return _lower(self.name)
 
   def _set_key(self, new_key):
     self.name = new_key

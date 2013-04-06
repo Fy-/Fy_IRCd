@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-import logging, sys
+import logging, sys, string
+
+def _lower(s):
+  # https://github.com/jrosdahl/miniircd/blob/master/miniircd
+  _alpha = "abcdefghijklmnopqrstuvwxyz"
+  _ircstring_translation = string.maketrans(string.upper(_alpha) + "[]\\^", _alpha + "{}|~")
+
+  return string.translate(s, _ircstring_translation)
 
 def logs():
   logger  = logging.getLogger('FyIRCd')

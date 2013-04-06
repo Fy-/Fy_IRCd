@@ -4,8 +4,6 @@ from gevent import socket
 import config, gevent, tools
 
 class Client(BaseModel):
-  socket_to_client = {}
-
   def __init__(self, socket, address, **kwargs):
     self.socket       = socket
     self.address      = address

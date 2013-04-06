@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
+import re
+
 class Misc(object):
   debug  = True
+
+class Channel(object):
+  re_name = re.compile(r"^[&#+!][^\x00\x07\x0a\x0d ,:]{0,50}$")
+
+class User(object):
+  re_nick = re.compile(r"^[][\`_^{|}A-Za-z][][\`_^{|}A-Za-z0-9]{0,50}$")
 
 class Server(object):
   port   = 8002

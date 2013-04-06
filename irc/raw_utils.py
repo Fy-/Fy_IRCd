@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from models import User, Channel
-import hashlib
+import hashlib, config
 
 def _create_user(target):
   chash = hashlib.sha224(str(target.socket_file)).hexdigest() 
@@ -14,6 +14,10 @@ def _create_user(target):
   return user
 
 def _create_channel(name):
+  print name, config.Channel.re_name.match(name)
+  if not config.Channel.re_name.match(name):
+    return False
+
   if Channel.get(name) == False:
     channel = Channel(name)
     channel.save()

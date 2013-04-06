@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from models import BaseModel, Error
 from models import Client
+from tools import _lower
 
 class User(BaseModel):
   nickname_to_user = {}
@@ -15,7 +16,6 @@ class User(BaseModel):
     self.username = None
     self.realname = None
     self.welcome  = False
-    self.bad_nick = False
 
     self.mode = UserMode()
     self.away = False
@@ -23,16 +23,16 @@ class User(BaseModel):
   @staticmethod
   def _update_nickname_to_user(old, new, hash):
     try:
-      del User.nickname_to_user[old]
+      del User.nickname_to_user[_lower(old)]
     except:
       pass
       
-    User.nickname_to_user[new] = hash
+    User.nickname_to_user[_lower(new)] = hash
 
   @staticmethod
   def by_nickname(nickname):
     try:
-      return User.get(User.nickname_to_user[nickname])
+      return User.get(User.nickname_to_user[_lower(nickname)])
     except:
       return False
 
