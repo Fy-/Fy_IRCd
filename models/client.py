@@ -28,7 +28,7 @@ class Client(BaseModel):
       if self.timestamp + 180 < now:
         self.disconnect()
 
-      if self.timestamp + 5 < now:
+      if self.timestamp + 50 < now:
         if self.sent_ping == False:
           self.msg('PING :%s' % self.timestamp)
           self.sent_ping = True 
