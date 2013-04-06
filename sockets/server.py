@@ -5,13 +5,11 @@ import tools, time, gevent
 
 def aliveness(socket, address):
   while 42:
-    now = time.time()
-    Client.by_socket(socket, address).check_aliveness()
-
-    if not Client.exists(socket):
+    try:
+      Client.by_socket(socket, address).check_aliveness()
+      gevent.sleep(10)
+    except:
       break
-
-    gevent.sleep(10)
     
 class Sockets(object):
   @staticmethod
