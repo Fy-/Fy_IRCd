@@ -14,7 +14,7 @@ def _join(target, chan):
   channel = raw_utils._create_channel(chan)
   if channel:
     target.get_user().join(channel)
-    target.send(channel.modes.get())
+    #target.send(channel.modes.get())
     names(target, [chan])
   else:
     raw_error._403(target, chan)
@@ -46,6 +46,14 @@ def part(target, params):
     else:
       _part(target, params[0])
 
+def mode(target, params):
+  if '#' in params[0]:
+    channel = Channel.get(_lower(params[0]))
+    if channel:
+      target.send(channel.modes.get())
+    else:
+      raw_error._401(target, params[0])
+
 def names(target, params):
   channel = Channel.get(_lower(params[0]))
   if channel:
@@ -53,6 +61,8 @@ def names(target, params):
     for message in to_send:
       target.send('353 %s = %s :%s' % (target.get_user().nickname, params[0], message.strip(' ')))
     target.send('366 %s %s :End of /NAMES list.' % (target.get_user().nickname, params[0]))
+  else:
+    raw_error._401(target, params[0])
 
 def notice(target, params):
   privmsg(target, params, 'NOTICE') 
@@ -66,9 +76,10 @@ def privmsg(target, params, cmd='PRIVMSG'):
     if '#' in params[0]:
       channel = Channel.get(_lower(params[0]))
       if channel:
-        for user in channel.users:
-          if user != target.get_user():
-            user.get_client().msg(':%s %s %s :%s' % (target.get_user(), cmd, params[0], params[1]))
+        if channel.can_send(target.get_user()):
+          channel.msg(':%s %s %s :%s' % (target.get_user(), cmd, params[0], params[1]), ignore_me=target.get_user())
+        else:
+          raw_error._404(target, params[0])
       else:
         raw_error._401(target, params[0])
     else:

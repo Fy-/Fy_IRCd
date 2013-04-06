@@ -6,7 +6,10 @@ def _401(target, attr):
   target.send('401 %s %s :No such nick/channel' % (target.get_user().nickname, attr))
 
 def _403(target, attr):
-  target.send('403 %s %s :No such channel' % (target.get_user().nickname, attr))
+  target.send('403 %s %s :No such nick/channel' % (target.get_user().nickname, attr))
+
+def _404(target, attr):
+  target.send('404 %s %s :Cannot send to channel' % (target.get_user().nickname, attr)) 
 
 def _411(target):
   target.send('411 %s :No recipient given' % (target.get_user().nickname))

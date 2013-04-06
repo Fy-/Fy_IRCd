@@ -13,7 +13,7 @@ class ChannelMode(object):
     self.var     = {}
 
   def has(self, mode):
-    return mode in current
+    return mode in self.current
 
   def add(self, mode, var=None):
     if mode in ChannelMode.modes:
@@ -28,7 +28,6 @@ class ChannelMode(object):
     if modes:
       return 'MODE %s +%s' % (self.channel.name, mode)
     return False
-      
 
 class Channel(BaseModel):
   def __init__(self, name, **kwargs):
@@ -37,18 +36,22 @@ class Channel(BaseModel):
     self.users = []
     self.modes = ChannelMode(self)
 
-  def send(self, message):
-    self.msg(':%s %s' % (config.Server.name, message))
+  def send(self, message, ignore_me=False):
+    self.msg(':%s %s' % (config.Server.name, message), ignore_me)
 
-  def msg(self, message):
+  def msg(self, message, ignore_me=False):
     for cuser in self.users:
-      cuser.get_client().msg(message)
+      if ignore_me != cuser:
+        cuser.get_client().msg(message)
 
-  def userlist_str(self):
-    userlist = ''
-    for user in self.users:
-      userlist += ' ' + user.nickname
-    return userlist
+  def can_send(self, user):
+    if self.modes.has('n'):
+      if user in self.users:
+        return True
+      else:
+        return False
+
+    return True
 
   def join(self, user):
     self.users.append(user)
@@ -67,6 +70,12 @@ class Channel(BaseModel):
     if len(self.users) == 0:
       self.delete()
 
+  def userlist_str(self):
+    userlist = ''
+    for user in self.users:
+      userlist += ' ' + user.nickname
+    return userlist
+    
   def get_key(self):
     return _lower(self.id)
 
