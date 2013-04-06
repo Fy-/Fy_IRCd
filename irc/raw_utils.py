@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 from models import User, Channel
 from tools import _lower
+from libs.markov import construct_sentence
 import hashlib, config
+
+def _hostname(reverse):
+  reverse = reverse.strip('.')
+  tmp = reverse.split('.', 1)
+
+  return construct_sentence(slug=True) + '.' + tmp[1]
 
 def _create_user(target):
   chash = hashlib.sha224(str(target.socket_file)).hexdigest() 
@@ -11,7 +18,6 @@ def _create_user(target):
     user.save()
 
   user = target.get_user()
-
   return user
 
 def _create_channel(name):

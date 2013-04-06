@@ -12,6 +12,8 @@ class User(BaseModel):
 
     self._socket  = socket
     self.nickname = None
+    self.ip       = None
+    self.reverse  = None
     self.hostname = None
     self.username = None
     self.realname = None

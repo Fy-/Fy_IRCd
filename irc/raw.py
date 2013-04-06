@@ -2,7 +2,7 @@
 from models import Client, User, Channel
 import raw_error, raw_init, raw_utils
 from tools import _lower
-import config, time
+import config, time, dns.reversename
 
 """
   Channel command
@@ -114,9 +114,11 @@ def user(target, params):
   if user.welcome:
     raw_error._462()
   else:
-    user.hostname = target.address[0]
     user.realname = params[3]
     user.username = params[0]
+    user.ip       = target.address[0]
+    user.reverse  = dns.reversename.from_address(user.ip)
+    user.hostname = raw_utils._hostname(str(user.reverse))
     user.save()
 
     if user.nickname:
@@ -142,7 +144,6 @@ def whois(target, params):
       target.send('318 %s %s End of /WHOIS list.' % (target.get_user().nickname, user.nickname))
     else:
       raw_error._401(target, params[0])
-
 
 def nick(target, params): 
   user = raw_utils._create_user(target)
