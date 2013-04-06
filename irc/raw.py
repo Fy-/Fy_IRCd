@@ -162,7 +162,7 @@ def nick(target, params):
     raw_error._432(target, params[0])
   else:
     if user.welcome:
-      user.send_all(':%s NICK :%s' % (user, params[0]))
+      user.msg_all(':%s NICK :%s' % (user, params[0]))
       user.rename(params[0])
       user.save()
     else:

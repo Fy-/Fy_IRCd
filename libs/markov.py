@@ -20,7 +20,7 @@ def create_chain(file_paths):
 
 def construct_sentence(word_count=5, slug=False):
   markov_chain = create_chain(["./var/markov/pg6527.txt"])
-
+  
   generated_sentence = ""
   word_tuple = random.choice(markov_chain.keys())
   w1 = word_tuple[0]
