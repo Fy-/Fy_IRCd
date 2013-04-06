@@ -1,3 +1,6 @@
+Unidecode==0.04.12
+argparse==1.2.1
+dnspython==1.10.0
 gevent==0.13.8
 greenlet==0.4.0
 wsgiref==0.1.2
