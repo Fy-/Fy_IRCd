@@ -3,7 +3,6 @@ from unidecode import unidecode
 
 import random, os, re
 
- 
 def create_chain(file_paths):
   markov_chain = {}
   word1 = "\n"
