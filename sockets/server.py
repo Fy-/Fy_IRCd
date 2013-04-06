@@ -10,7 +10,7 @@ class Sockets(object):
     tools.log.info('Client disconnected %s' % client)
 
     if client.get_user():
-     client.get_user().quit()
+      client.get_user().quit()
     try:
       client.socket.shutdown(socket.SHUT_WR) 
     except:

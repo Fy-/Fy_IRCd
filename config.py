@@ -11,10 +11,11 @@ class User(object):
   re_nick = re.compile(r"^[][\`_^{|}A-Za-z][][\`_^{|}A-Za-z0-9]{0,50}$")
 
 class Server(object):
-  port   = 8002
+  port   = 6667
   ip     = '0.0.0.0'
+  #ip     = '178.32.42.40'
   name   = 'FyIRCd.com'
-  vers   = '0.1a'
+  vers   = '0.1-dev'
   motd   = None
 
 with open('./var/motd.txt') as f:

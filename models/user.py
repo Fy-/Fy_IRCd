@@ -37,8 +37,11 @@ class User(BaseModel):
       return False
 
   def send_all(self, raw):
-    for channel in self.channels:
-      channel.send(raw)
+    if len(self.channels) == 0:
+      self.get_client().msg(raw)
+    else:
+      for channel in self.channels:
+        channel.send(raw)
 
   def get_client(self):
     return Client.get(self._socket)
@@ -66,6 +69,8 @@ class User(BaseModel):
 
     for channel in self.channels:
       channel.part(self)
+
+    self.delete()
 
   def _set_key(self, new_key):
     self.chash = new_key

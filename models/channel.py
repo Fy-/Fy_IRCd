@@ -25,7 +25,10 @@ class Channel(BaseModel):
 
     self.users.remove(user)
     self.save()
-    
+
+    if len(self.users) == 0:
+      self.delete()
+
   def get_key(self):
     return _lower(self.id)
 

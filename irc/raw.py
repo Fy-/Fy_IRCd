@@ -147,7 +147,7 @@ def whois(target, params):
 def nick(target, params): 
   user = raw_utils._create_user(target)
 
-  if User.by_nickname(params[0]) != False:
+  if User.by_nickname(params[0]) != False and User.by_nickname(params[0]) != user:
     raw_error._433(target, params[0])
   elif not config.User.re_nick.match(params[0]):
     raw_error._432(target, params[0])
