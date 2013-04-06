@@ -34,6 +34,7 @@ def _create_channel(name):
 
   if Channel.get(_lower(name)) == False:
     channel = Channel(name)
+    channel.modes.add('n')
     channel.save()
     return channel
   else:

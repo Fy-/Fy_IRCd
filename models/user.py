@@ -2,6 +2,7 @@
 from models import BaseModel, Error
 from models import Client
 from tools import _lower
+import config
 
 class User(BaseModel):
   nickname_to_user = {}
@@ -21,9 +22,6 @@ class User(BaseModel):
 
     self.welcome  = False
 
-    self.mode = UserMode()
-    self.away = False
-
   @staticmethod
   def _update_nickname_to_user(old, new, hash):
     try:
@@ -40,12 +38,15 @@ class User(BaseModel):
     except:
       return False
 
-  def send_all(self, raw):
+  def msg_all(self, message):
     if len(self.channels) == 0:
-      self.get_client().msg(raw)
+      self.get_client().msg(message)
     else:
       for channel in self.channels:
-        channel.send(raw)
+        channel.msg(message)
+
+  def send_all(self, message):
+    self.msg_all(':%s %s' % (config.Server.name, message))
 
   def get_client(self):
     return Client.get(self._socket)
@@ -81,12 +82,3 @@ class User(BaseModel):
 
   def __str__(self):
     return '%s!%s@%s' % (self.nickname, self.username, self.hostname)
-
-class UserMode(object):
-  a = False # away
-  i = False # invisible
-  w = False # wallops
-  r = False # restricted
-  O = False # operator
-  o = False # local operator
-  n = False # notices

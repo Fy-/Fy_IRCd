@@ -10,25 +10,31 @@ import config, time
 def _unknown(target, raw, params):
   pass
 
+def _join(target, chan):
+  channel = raw_utils._create_channel(chan)
+  if channel:
+    target.get_user().join(channel)
+    target.send(channel.modes.get())
+    names(target, [chan])
+  else:
+    raw_error._403(target, chan)
+
+def _part(target, chan):
+  channel = Channel.get(_lower(chan))
+  if channel:
+    target.get_user().part(channel)
+  else:
+    raw_error._403(target, chan)
+
 def join(target, params):
   if '#' not in params[0]:
     raw_error._403(target, params[0])
   else:
     if ',' in params[0]:
       for tmp in params[0].split(','):
-        channel = raw_utils._create_channel(tmp)
-        if channel:
-          target.get_user().join(channel)
-          names(target, [tmp])
-        else:
-          raw_error._403(target, tmp)
+        _join(target, tmp)
     else:
-      channel = raw_utils._create_channel(params[0])
-      if channel:
-        target.get_user().join(channel)
-        names(target, params)
-      else:
-        raw_error._403(target, params[0])
+      _join(target, params[0])
 
 def part(target, params):
   if '#' not in params[0]:
@@ -36,26 +42,14 @@ def part(target, params):
   else:
     if ',' in params[0]:
       for tmp in params[0].split(','):
-        channel = Channel.get(_lower(tmp))
-        if channel:
-          target.get_user().part(channel)
-        else:
-          raw_error._403(target, tmp)
+        _part(target, tmp)
     else:
-      channel = Channel.get(_lower(params[0]))
-      if channel:
-        target.get_user().part(channel)
-      else:
-        raw_error._403(target, params[0])
+      _part(target, params[0])
 
 def names(target, params):
   channel = Channel.get(_lower(params[0]))
   if channel:
-    user_list = ''
-    for user in channel.users:
-      user_list += ' ' + user.nickname
-
-    to_send = raw_utils._split_string_512(user_list)
+    to_send = raw_utils._split_string_512(channel.userlist_str())
     for message in to_send:
       target.send('353 %s = %s :%s' % (target.get_user().nickname, params[0], message.strip(' ')))
     target.send('366 %s %s :End of /NAMES list.' % (target.get_user().nickname, params[0]))

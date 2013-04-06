@@ -47,11 +47,13 @@ class Client(BaseModel):
     except:
       self.dropped = True
 
-  def msg(self, msg):
-    self.write(msg)
+  def msg(self, message):
+    if message:
+      self.write(message)
 
   def send(self, message):
-    self.write(':%s %s' % (config.Server.name, message))
+    if message:
+      self.msg(':%s %s' % (config.Server.name, message))
 
   def set_user(self, user):
     self._user = user
