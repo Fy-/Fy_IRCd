@@ -7,11 +7,15 @@ One day maybe FyIRCd will be a full-featured IRC server, for now it's just a pla
 # Unique features
 __1. Best hostnames ever:__ Using markov chains and "GNU/Linux: Guide to Installation and Usage"
 ```
-  @when.you.boot.debian.a.35.106
-  @certain.precautions.are.taken.the.35.106
-  @cd.it.may.report.installation.35.106
+  @when.you.boot.debian.a.FyIRCd.com
+  @certain.precautions.are.taken.the.FyIRCd.com
+  @cd.it.may.report.installation.FyIRCd.com
   @hardware.user.applications.that.ask.free.fr
   @now.change.to.the.source.free.fr
+```
+__2. Server side smileys:__
+```
+ ':(': '😒', ':)': '😊', ':D': '😃', '>.<'  : '😆', '^^': '😄', ':|': '😐', ':p': '😋', '=)': '㋡', '<3': '❤', ':x': '☠', '(note)'  : '♫', '(mail)'  : '✉', '(star)'  : '✩', '(valid)' : '✔', '(flower)': '❀', '(plane)' : '✈', '(copy)'  : '©', '(tel)'   : '☎', 'x.x'  : '٩(×̯×)۶', 'o.o'  : 'Ꙩ_Ꙩ', '<3.<3' : '❤‿❤'
 ```
 
 # Running FyIRCd
