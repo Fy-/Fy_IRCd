@@ -17,7 +17,7 @@ __1. Best hostnames ever:__ Using markov chains and "GNU/Linux: Guide to Install
 # Running FyIRCd
 1. git clone https://github.com/Fy-/FyIRCd.git
 2. pip install -r requirements.txt
-3. python run.py
+3. ./fyircd
 
 # Testing FyIRCd
 1. /server fyircd.com
