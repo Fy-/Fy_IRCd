@@ -68,11 +68,11 @@ class User(BaseModel):
     now = int(time.time())
 
     if self.status['last_ping']:
-      if (self.status['last_ping'] + 30) < now:
+      if (self.status['last_ping'] + 60) < now:
         self.status['quit_txt'] = 'Ping timeout: %s seconds' % (now - self.status['last_ping'])
         self.save()
         self.disconnect(self.status['quit_txt'])
-      if (self.status['last_ping'] + 15) < now:
+      if (self.status['last_ping'] + 45) < now:
         if not self.status['sent_ping']:
           self.write('PING :%s' % self.status['last_ping'])
           self.status['sent_ping'] = True 
