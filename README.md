@@ -5,7 +5,7 @@ Why choose to make an IRC Server…? Cause I can ^_^ (gtfo :3)
 One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground.
 
 # Testing FyIRCd
-__irc://fyircd.com/fyircd__ (server: fyircd.com 6667 / channel #fyircd)
+__irc://fyircd.com/fyircd__ (server: FyIRCd.com 6667 / channel #FyIRCd)
 
 # Unique features
 __1. Best hostnames ever:__ Using markov chains and "GNU/Linux: Guide to Installation and Usage"
