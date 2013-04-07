@@ -4,6 +4,9 @@ FyIRCd (Python IRC Server)
 Why choose to make an IRC Server…? Cause I can ^_^ (gtfo :3)
 One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground.
 
+# Testing FyIRCd
+<a href="irc://fyircd.com#fyircd">irc://fyircd.com#fyircd</a> (server: fyircd.com 6667 / channel #fyircd)
+
 # Unique features
 __1. Best hostnames ever:__ Using markov chains and "GNU/Linux: Guide to Installation and Usage"
 ```
@@ -22,7 +25,3 @@ __2. Server side smileys:__
 1. git clone https://github.com/Fy-/FyIRCd.git
 2. pip install -r requirements.txt
 3. ./fyircd
-
-# Testing FyIRCd
-1. /server fyircd.com
-2. /join #fyircd
