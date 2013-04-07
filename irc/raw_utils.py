@@ -14,8 +14,6 @@ def _reverse(ip):
     return (4, '0.0.FyIRCd.com')
 
 def _hostname(word_count, reverse):
-  print reverse
-
   if User.ip_to_reverse.get(reverse):
     return User.ip_to_reverse[reverse]
 

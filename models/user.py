@@ -91,7 +91,7 @@ class User(BaseModel):
 
   def write_relatives(self, data, ignore_me=False):
     for relative in self.relatives:
-      relative.write(data)
+        relative.write(data)
 
     if not ignore_me:
       self.write(data)

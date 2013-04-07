@@ -18,9 +18,9 @@ class Sockets(object):
     tools.log.info('Client disconnected: %s' % User.get(socket))
 
     User.get(socket).quit()
-    socket.close()
-
     User.get(socket).delete()
+
+    socket.close()
 
   @staticmethod
   def handle(socket, address):
@@ -32,8 +32,9 @@ class Sockets(object):
 
     while True:
       user = User.get(socket)
-      line = user.socket['file'].readline()
-
+      try: line = user.socket['file'].readline()
+      except: break
+      
       if not line:
         break
       else:
