@@ -1,48 +1,53 @@
 # -*- coding: utf-8 -*-
-from models import Client
+from models import User
 from irc import Message
 import tools, time, gevent
 
-def aliveness(socket, address):
-  while 42:
-    try:
-      Client.by_socket(socket, address).check_aliveness()
-      gevent.sleep(10)
-    except:
-      break
     
 class Sockets(object):
   @staticmethod
-  def close(client):
+  def is_alive(user):
+    while 42:
+      if user.status['dropped'] == True:
+        user.disconnect()
+        break
+
+      try:
+        user.is_alive()
+      except:
+        break
+      
+      gevent.sleep(10)
+
+  @staticmethod
+  def close(user):
     tools.log.info('Client disconnected %s' % client)
 
-    if client.get_user():
-      client.get_user().quit()
+    if user:
+      user.quit()
     try:
-      client.socket.shutdown(socket.SHUT_WR) 
+      user.socket['socket'].shutdown(socket.SHUT_WR) 
     except:
       tools.log.info('Client %s already disconnected' % client)
-    client.socket.close()
-    client.delete()
-    client.save()
+
+    user.socket['socket'].close()
+    user.delete()
 
   @staticmethod
   def handle(socket, address):
-    client = Client(socket, address)
-    client.save()
+    user = User(socket, address)
+    user.save()
 
-    sfile  = socket.makefile('rw')
-    tools.log.info('New client %s' % Client.by_socket(socket, address))
-
-    gevent.Greenlet.spawn(aliveness, socket, address)
+    tools.log.info('New client %s' % user)
+    gevent.Greenlet.spawn(Sockets.is_alive, user)
 
     while 42:
-      line = sfile.readline()
+      line = user.socket['file'].readline()
 
       if not line:
         break
       else:
         raw, params = Message.from_string(line)
-        message = Message(Client.by_socket(socket, address), raw=raw, params=params)
+        message = Message(user, raw=raw, params=params)
       
-    Sockets.close(Client.by_socket(socket, address))
+    Sockets.close(user)

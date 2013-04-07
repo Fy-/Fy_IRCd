@@ -1,35 +1,103 @@
 # -*- coding: utf-8 -*-
+from gevent import socket 
 from models import BaseModel, Error
-from models import Client
 from tools import _lower
-import config
+
+import config, gevent, tools, time
 
 class User(BaseModel):
   nickname_to_user = {}
+  ip_to_reverse    = {}
 
-  def __init__(self, chash, socket):
-    self.chash    = chash
-    self.channels = []
+  def __init__(self, socket, address):
+    self.socket = {
+      'socket' : socket,
+      'file'   : socket.makefile('rw'),
+      'IP'     : address[0]
+    }
 
-    self._socket  = socket
+    self.status  =  {
+      'sent_ping'   : False,
+      'last_ping'   : False,
+      'dropped'     : False,
+      'welcomed'    : False
+    }
 
-    self.nickname = None
-    self.ip       = None
-    self.reverse  = None
-    self.hostname = None
-    self.username = None
-    self.realname = None
+    self.channels   = set()
+    self.relatives  = set()
+    self.nickname   = None
+    self.reverse    = None
+    self.username   = None
+    self.realname   = None
+    self.hostname   = None
 
-    self.welcome  = False
+  def rename(self, new_name):
+    User._update_nickname_to_user(self.nickname, new_name, self.get_key())
+    self.nickname = new_name
+    self.save()
 
-  @staticmethod
-  def _update_nickname_to_user(old, new, hash):
-    try:
-      del User.nickname_to_user[_lower(old)]
-    except:
-      pass
-      
-    User.nickname_to_user[_lower(new)] = hash
+  def join(self, channel):
+    self.channels.add(channel)
+    channel.join(self)
+
+  def part(self, channel):
+    self.channels.discard(channel)
+    channel.part(self)
+
+  def quit(self):
+    del User.nickname_to_user[_lower(self.nickname)]
+    # send quit to relatives.
+
+    self.delete()
+
+  def update_aliveness(self, timestamp):
+    if int(timestamp) == int(self.status['last_ping']):
+      self.status['last_ping'] = int(time.time())
+      self.status['sent_ping'] = False
+
+    self.save()
+
+  def is_alive(self):
+    now = int(time.time())
+
+    if self.status['last_ping']:
+      if (self.status['last_ping'] + 60) < now:
+          self.disconnect()
+      if (self.status['last_ping'] + 45) < now:
+        if not self.status['sent_ping']:
+          self.msg('PING :%s' % self.status['last_ping'])
+          self.status['sent_ping'] = True         
+    else:
+      self.status['last_ping'] = now
+      self.status['sent_ping'] = True
+
+    self.save()
+
+  def write(self, data):
+    self._write(data)
+
+  def send(self, data):
+    self._write(':%s %s' % (config.Server.name, data))
+
+  def write_relatives(self, data, ignore_me=False):
+    for relative in self.relatives:
+      relative.write(data)
+
+    if not ignore_me:
+      self.write(data)
+
+  def send_relatives(self, data, ignore_me=False):
+    for relative in self.relatives:
+      relative.send(data)
+
+    if not ignore_me:
+      self.send(data)
+
+  def disconnect(self):
+    self.socket.shutdown(socket.SHUT_WR)
+
+  def get_key(self):
+    return self.socket['socket']
 
   @staticmethod
   def by_nickname(nickname):
@@ -38,47 +106,30 @@ class User(BaseModel):
     except:
       return False
 
-  def msg_all(self, message):
-    if len(self.channels) == 0:
-      self.get_client().msg(message)
-    else:
-      for channel in self.channels:
-        channel.msg(message)
+  def _set_key(self, socket):
+    self.socket['socket'] = socket
+    self.socket['file']   = socket.makefile('rw')
 
-  def send_all(self, message):
-    self.msg_all(':%s %s' % (config.Server.name, message))
+  def _write(self, data):
+    tools.log.debug('%s >>> %s' % (self, data))
+    try:
+      self.socket['file'].write('%s\r\n' % data)
+      self.socket['file'].flush()
+    except:
+      tools.log.debug('Can\' write on socket')
+      self.status['dropped'] = True
 
-  def get_client(self):
-    return Client.get(self._socket)
-
-  def get_key(self):
-    return self.chash
-
-  def rename(self, new_name):
-    User._update_nickname_to_user(self.nickname, new_name, self.get_key())
-    self.nickname = new_name
-    self.save()
-
-  def join(self, channel):
-    if channel not in self.channels:
-      self.channels.append(channel)
-      channel.join(self)
-
-  def part(self, channel):
-    if channel in self.channels:
-      self.channels.remove(channel)
-      channel.part(self)
-
-  def quit(self):
-    del User.nickname_to_user[_lower(self.nickname)]
-
-    for channel in self.channels:
-      channel.part(self)
-
-    self.delete()
-
-  def _set_key(self, new_key):
-    self.chash = new_key
+  @staticmethod
+  def _update_nickname_to_user(old, new, socket):
+    if old:
+      del User.nickname_to_user[_lower(old)]
+    User.nickname_to_user[_lower(new)] = socket
 
   def __str__(self):
-    return '%s!%s@%s' % (self.nickname, self.username, self.hostname)
+    if self.nickname:
+      return '%s!%s@%s' % (self.nickname, self.username, self.hostname)
+    else: 
+      return self.socket['IP']
+
+  def __iter__(self):
+    return iter([self])

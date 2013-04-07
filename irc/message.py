@@ -16,32 +16,24 @@ class Message(object):
       raw._unknown(self.target, self.raw, self.params)
 
   @staticmethod
-  def from_string(str):
-    tools.log.debug(' <<< ' + str.replace('\n', ''))
-    if len(str) > 512:
-      raise Error('Max message size: 512 characters')
+  def from_string(line):
+    if len(line) <= 512:
+      line = line.strip(' \t\n\r')
+      tools.log.debug('<<< %s' % line)
 
-    raw  = str
-    last = None
+      x = line.split(' ', 1)
+      command = x[0].upper()
 
-    if ':' in str:
-      tmp  = str.split(':', 1)
-      raw  = tmp[0]
-      last = tmp[1]
-    
-    result = raw.split(' ')
-    if last is not None: 
-      result.append(last)
-
-    tmp = result[0]
-    del result[0]
-
-    # redo c'est moche.
-    new_result = []
-    for r in result:
-      r = r.replace("\n", '')
-      r = r.replace("\r", '')
-      if r != '':
-        new_result.append(r)
-
-    return (tmp, new_result)
+      if len(x) == 1:
+        args = []
+      else:
+        if ':' in x[1]:
+          y = x[1].split(':', 1)
+          args = y[0].strip(' ').split(' ')
+          if len(args) == 1 and len(args[0]) == 0:
+            args = []
+          args.append(y[1])
+        else:
+          args = x[1].split(' ')
+          
+    return (command, args)

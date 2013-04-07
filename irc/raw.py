@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from models import Client, User, Channel
+from models import User, Channel
 from tools import _lower
 from plugins.core import raw_callback
 
@@ -15,7 +15,7 @@ def _unknown(target, raw, params):
 def _join(target, chan):
   channel = raw_utils._create_channel(chan)
   if channel:
-    target.get_user().join(channel)
+    target.join(channel)
     #target.send(channel.modes.get())
     names(target, [chan])
   else:
@@ -24,7 +24,7 @@ def _join(target, chan):
 def _part(target, chan):
   channel = Channel.get(_lower(chan))
   if channel:
-    target.get_user().part(channel)
+    target.part(channel)
   else:
     raw_error._403(target, chan)
 
@@ -61,8 +61,8 @@ def names(target, params):
   if channel:
     to_send = raw_utils._split_string_512(channel.userlist_str())
     for message in to_send:
-      target.send('353 %s = %s :%s' % (target.get_user().nickname, params[0], message.strip(' ')))
-    target.send('366 %s %s :End of /NAMES list.' % (target.get_user().nickname, params[0]))
+      target.send('353 %s = %s :%s' % (target.nickname, params[0], message.strip(' ')))
+    target.send('366 %s %s :End of /NAMES list.' % (target.nickname, params[0]))
   else:
     raw_error._401(target, params[0])
 
@@ -81,18 +81,18 @@ def privmsg(target, params, cmd='PRIVMSG'):
     if '#' in params[0]:
       channel = Channel.get(_lower(params[0]))
       if channel:
-        if channel.can_send(target.get_user()):
-          channel.msg(':%s %s %s :%s' % (target.get_user(), cmd, params[0], params[1]), ignore_me=target.get_user())
+        if channel.can_send(target):
+          channel.write(':%s %s %s :%s' % (target, cmd, params[0], params[1]), ignore_me=target)
         else:
           raw_error._404(target, params[0])
       else:
         raw_error._401(target, params[0])
     else:
       try:
-        source = target.get_user()
-        to     = User.by_nickname(params[0]).get_client()
-        client = User.by_nickname(params[0]).get_client()
-        client.msg(':%s %s %s :%s' % (source, cmd, params[0], params[1]))
+        source = target
+        to     = User.by_nickname(params[0])
+        user   = User.by_nickname(params[0])
+        user.write(':%s %s %s :%s' % (source, cmd, params[0], params[1]))
       except:
         raw_error._401(target, params[0])
 
@@ -106,10 +106,10 @@ def ison(target, params):
     if User.by_nickname(tmp_user):
       user_list += ' %s' % User.by_nickname(tmp_user).nickname
 
-  target.send('303 %s :%s' % (target.get_user().nickname, user_list.strip()))
+  target.send('303 %s :%s' % (target.nickname, user_list.strip()))
 
 def ping(target, params):
-  target.update_aliveness(target.timestamp)
+  target.update_aliveness(target.status['last_ping'])
   target.send('PONG %s :%s' % (config.Server.name, params[0]))
 
 def pong(target, params):
@@ -120,21 +120,16 @@ def quit(target, params):
   target.save()
 
 def user(target, params):
-  user = raw_utils._create_user(target)
-
-  if user.welcome:
+  if target.status['welcomed']:
     raw_error._462()
   else:
-    
+    target.realname = params[3]
+    target.username = params[0]
+    target.reverse  = raw_utils._reverse(target.socket['IP'])
+    target.hostname = raw_utils._hostname(str(target.reverse))
+    target.save()
 
-    user.realname = params[3]
-    user.username = params[0]
-    user.ip       = target.address[0]
-    user.reverse  = raw_utils._reverse(user.ip)
-    user.hostname = raw_utils._hostname(str(user.reverse))
-    user.save()
-
-    if user.nickname:
+    if target.nickname:
       raw_init._welcome(target)
 
 def userhost(target, params):
@@ -143,9 +138,9 @@ def userhost(target, params):
   else:
     user = User.by_nickname(params[0])
     if user:
-      target.send('302 %s :%s=%s' % (target.get_user().nickname, user.nickname, user))
+      target.send('302 %s :%s=%s' % (target.nickname, user.nickname, user))
     else:
-      target.send('302 %s :' % (target.get_user().nickname))
+      target.send('302 %s :' % (target.nickname))
 
 def whois(target, params):
   if len(params) == 0:
@@ -153,25 +148,23 @@ def whois(target, params):
   else:
     user = User.by_nickname(params[0])
     if user:
-      target.send('311 %s %s ~%s %s * :%s' % (target.get_user().nickname, user.nickname, user.username, user.hostname, user.realname))
-      target.send('318 %s %s End of /WHOIS list.' % (target.get_user().nickname, user.nickname))
+      target.send('311 %s %s ~%s %s * :%s' % (target.nickname, user.nickname, user.username, user.hostname, user.realname))
+      target.send('318 %s %s End of /WHOIS list.' % (target.nickname, user.nickname))
     else:
       raw_error._401(target, params[0])
 
 def nick(target, params): 
-  user = raw_utils._create_user(target)
-
-  if User.by_nickname(params[0]) != False and User.by_nickname(params[0]) != user:
+  if User.by_nickname(params[0]) != False and User.by_nickname(params[0]) != target:
     raw_error._433(target, params[0])
   elif not config.User.re_nick.match(params[0]):
     raw_error._432(target, params[0])
   else:
-    if user.welcome:
-      user.msg_all(':%s NICK :%s' % (user, params[0]))
-      user.rename(params[0])
-      user.save()
+    if target.status['welcomed']:
+      target.write_relatives(':%s NICK :%s' % (target, params[0]))
+      target.rename(params[0])
+      target.save()
     else:
-      user.rename(params[0])
-      user.save()
-      if user.hostname:
+      target.rename(params[0])
+      target.save()
+      if target.hostname:
         raw_init._welcome(target)

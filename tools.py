@@ -15,7 +15,7 @@ def logs():
   hl.setFormatter(fm)
   logger.addHandler(hl)
 
-  logger.setLevel(logging.INFO)
+  logger.setLevel(logging.DEBUG)
 
   return logger
 

@@ -4,7 +4,7 @@ from tools import _lower
 from libs.markov import construct_sentence
 from gevent.dns import resolve_reverse
 from socket import inet_aton
-import hashlib, config, socket
+import config, socket
 
 def _reverse(ip):
   packed_ip = inet_aton(ip)
@@ -17,16 +17,6 @@ def _hostname(reverse):
   reverse = reverse.strip('.')
   tmp = reverse.split('.', 2)
   return construct_sentence(word_count=4, slug=True) + '.' + tmp[2]
-
-def _create_user(target):
-  chash = hashlib.sha224(str(target.socket_file)).hexdigest() 
-  if target.get_user() == None:
-    user = User(chash, target.socket)
-    target.set_user(user)
-    user.save()
-
-  user = target.get_user()
-  return user
 
 def _create_channel(name):
   if not config.Channel.re_name.match(name):

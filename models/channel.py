@@ -33,16 +33,8 @@ class Channel(BaseModel):
   def __init__(self, name, **kwargs):
     self.name  = name
     self.id    = _lower(name)
-    self.users = []
+    self.users = set()
     self.modes = ChannelMode(self)
-
-  def send(self, message, ignore_me=False):
-    self.msg(':%s %s' % (config.Server.name, message), ignore_me)
-
-  def msg(self, message, ignore_me=False):
-    for cuser in self.users:
-      if ignore_me != cuser:
-        cuser.get_client().msg(message)
 
   def can_send(self, user):
     if self.modes.has('n'):
@@ -54,21 +46,38 @@ class Channel(BaseModel):
     return True
 
   def join(self, user):
-    self.users.append(user)
+    self.users.add(user)
     self.save()
 
+    user.relatives |= self.users
+    user.save()
+
+    self.write(':%s JOIN %s' % (user, self.name))
+
     for cuser in self.users:
-      cuser.get_client().msg(':%s JOIN %s' % (user, self.name))
+      cuser.relatives.add(user)
+      cuser.save()
 
   def part(self, user):
-    for cuser in self.users:
-      cuser.get_client().msg(':%s PART %s' % (user, self.name))
+    user.relatives ^= self.users
+    user.save()
 
-    self.users.remove(user)
+    self.write(':%s PART %s' % (user, self.name))
+
+    self.users.discard(user)
     self.save()
+    
+    for cuser in self.users:
+      cuser.relatives.discard(user)
+      cuser.save()
 
     if len(self.users) == 0:
       self.delete()
+
+  def write(self, message, ignore_me=False):
+    for cuser in self.users:
+      if ignore_me != cuser:
+        cuser.write(message)
 
   def userlist_str(self):
     userlist = ''
