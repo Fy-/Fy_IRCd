@@ -46,11 +46,12 @@ class Channel(BaseModel):
     return True
 
   def join(self, user):
+    user.relatives |= self.users
+    user.relatives.discard(user)
+    user.save()
+
     self.users.add(user)
     self.save()
-
-    user.relatives |= self.users
-    user.save()
 
     self.write(':%s JOIN %s' % (user, self.name))
 

@@ -6,42 +6,32 @@ import tools, time, gevent
     
 class Sockets(object):
   @staticmethod
-  def is_alive(user):
-    while 42:
-      if user.status['dropped'] == True:
-        user.disconnect()
-        break
-
-      try:
-        user.is_alive()
-      except:
-        break
+  def is_alive(socket):
+    while User.get(socket):
+      try: User.get(socket).is_alive()
+      except: break
       
       gevent.sleep(10)
 
   @staticmethod
-  def close(user):
-    tools.log.info('Client disconnected %s' % client)
+  def close(socket):
+    tools.log.info('Client disconnected: %s' % User.get(socket))
 
-    if user:
-      user.quit()
-    try:
-      user.socket['socket'].shutdown(socket.SHUT_WR) 
-    except:
-      tools.log.info('Client %s already disconnected' % client)
+    User.get(socket).quit()
+    socket.close()
 
-    user.socket['socket'].close()
-    user.delete()
+    User.get(socket).delete()
 
   @staticmethod
   def handle(socket, address):
     user = User(socket, address)
     user.save()
 
-    tools.log.info('New client %s' % user)
-    gevent.Greenlet.spawn(Sockets.is_alive, user)
+    tools.log.info('New client: %s' % user)
+    gevent.Greenlet.spawn(Sockets.is_alive, socket)
 
-    while 42:
+    while True:
+      user = User.get(socket)
       line = user.socket['file'].readline()
 
       if not line:
@@ -49,5 +39,5 @@ class Sockets(object):
       else:
         raw, params = Message.from_string(line)
         message = Message(user, raw=raw, params=params)
-      
-    Sockets.close(user)
+
+    Sockets.close(socket)

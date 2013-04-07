@@ -12,15 +12,15 @@ class User(BaseModel):
   def __init__(self, socket, address):
     self.socket = {
       'socket' : socket,
-      'file'   : socket.makefile('rw'),
+      'file'   : socket.makefile(),
       'IP'     : address[0]
     }
 
     self.status  =  {
       'sent_ping'   : False,
       'last_ping'   : False,
-      'dropped'     : False,
-      'welcomed'    : False
+      'welcomed'    : False,
+      'quit_txt'    : ''
     }
 
     self.channels   = set()
@@ -45,33 +45,43 @@ class User(BaseModel):
     channel.part(self)
 
   def quit(self):
-    del User.nickname_to_user[_lower(self.nickname)]
-    # send quit to relatives.
+    self.write_relatives(':%s QUIT :%s' % (self, self.status['quit_txt']), True) 
 
-    self.delete()
+    for channel in self.channels:
+      channel.users.discard(self)
+      channel.save()
 
-  def update_aliveness(self, timestamp):
-    if int(timestamp) == int(self.status['last_ping']):
-      self.status['last_ping'] = int(time.time())
-      self.status['sent_ping'] = False
+    for cuser in self.relatives:
+      if cuser != self:
+        cuser.relatives.discard(self)
+        cuser.save()
 
+    if self.nickname:
+      del User.nickname_to_user[_lower(self.nickname)]
+
+  def update_aliveness(self):
+    self.status['last_ping'] = int(time.time())
+    self.status['sent_ping'] = False
     self.save()
 
   def is_alive(self):
     now = int(time.time())
 
     if self.status['last_ping']:
-      if (self.status['last_ping'] + 60) < now:
-          self.disconnect()
-      if (self.status['last_ping'] + 45) < now:
+      if (self.status['last_ping'] + 30) < now:
+        self.status['quit_txt'] = 'Ping timeout: %s seconds' % (now - self.status['last_ping'])
+        self.save()
+        self.disconnect(self.status['quit_txt'])
+      if (self.status['last_ping'] + 15) < now:
         if not self.status['sent_ping']:
-          self.msg('PING :%s' % self.status['last_ping'])
-          self.status['sent_ping'] = True         
+          self.write('PING :%s' % self.status['last_ping'])
+          self.status['sent_ping'] = True 
+          self.save()        
     else:
       self.status['last_ping'] = now
       self.status['sent_ping'] = True
-
-    self.save()
+      self.write('PING :%s' % self.status['last_ping'])
+      self.save()
 
   def write(self, data):
     self._write(data)
@@ -93,8 +103,10 @@ class User(BaseModel):
     if not ignore_me:
       self.send(data)
 
-  def disconnect(self):
-    self.socket.shutdown(socket.SHUT_WR)
+  def disconnect(self, error=False):
+    self.write('ERROR: ❤ %s ❤' % (self.status['quit_txt'] or error))
+    try :self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
+    except: pass
 
   def get_key(self):
     return self.socket['socket']
@@ -116,8 +128,7 @@ class User(BaseModel):
       self.socket['file'].write('%s\r\n' % data)
       self.socket['file'].flush()
     except:
-      tools.log.debug('Can\' write on socket')
-      self.status['dropped'] = True
+      pass
 
   @staticmethod
   def _update_nickname_to_user(old, new, socket):

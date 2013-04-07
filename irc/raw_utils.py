@@ -9,14 +9,21 @@ import config, socket
 def _reverse(ip):
   packed_ip = inet_aton(ip)
   try:
-    return resolve_reverse(packed_ip)[1]
+    return (3, resolve_reverse(packed_ip)[1])
   except:
-    return ip
+    return (4, '0.0.FyIRCd.com')
 
-def _hostname(reverse):
-  reverse = reverse.strip('.')
-  tmp = reverse.split('.', 2)
-  return construct_sentence(word_count=4, slug=True) + '.' + tmp[2]
+def _hostname(word_count, reverse):
+  print reverse
+
+  if User.ip_to_reverse.get(reverse):
+    return User.ip_to_reverse[reverse]
+
+  result   = reverse.strip('.').split('.', 2)
+  sentence = construct_sentence(word_count=word_count, slug=True)
+
+  User.ip_to_reverse[reverse] = sentence + '.' + result[2]
+  return User.ip_to_reverse[reverse]
 
 def _create_channel(name):
   if not config.Channel.re_name.match(name):

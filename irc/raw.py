@@ -109,28 +109,33 @@ def ison(target, params):
   target.send('303 %s :%s' % (target.nickname, user_list.strip()))
 
 def ping(target, params):
-  target.update_aliveness(target.status['last_ping'])
+  target.update_aliveness()
   target.send('PONG %s :%s' % (config.Server.name, params[0]))
 
 def pong(target, params):
-  target.update_aliveness(params[0])
+  target.update_aliveness()
 
 def quit(target, params):
-  target.disconnect()
+  try: target.status['quit_txt'] = params[1]
+  except: target.status['quit_txt'] = '×̯×'
   target.save()
+  target.disconnect(False)
 
 def user(target, params):
-  if target.status['welcomed']:
-    raw_error._462()
+  if len(params) != 4:
+    target.disconnect('gtfo')
   else:
-    target.realname = params[3]
-    target.username = params[0]
-    target.reverse  = raw_utils._reverse(target.socket['IP'])
-    target.hostname = raw_utils._hostname(str(target.reverse))
-    target.save()
+    if target.status['welcomed']:
+      raw_error._462()
+    else:
+      target.realname = params[3]
+      target.username = params[0]
+      word_count, target.reverse = raw_utils._reverse(target.socket['IP'])
+      target.hostname = raw_utils._hostname(word_count, target.reverse)
+      target.save()
 
-    if target.nickname:
-      raw_init._welcome(target)
+      if target.nickname:
+        raw_init._welcome(target)
 
 def userhost(target, params):
   if len(params) == 0:
