@@ -248,8 +248,6 @@ def whois(target, params):
       target.send('311 %s %s %s %s * :%s' % 
         (target.nickname, user.nickname, user.username, user.hostname, user.realname))
 
-      target.send('312 %s %s %s :%s' % 
-        (target.nickname, user.nickname, config.Server.name, config.Server.name))
 
       if len(user.channels) != 0:
         target.send('319 %s %s :%s' % 
@@ -262,6 +260,9 @@ def whois(target, params):
       target.send('317 %s %s %s %s :seconds idle, signon time' % 
         (target.nickname, user.nickname, (int(time.time())-user.idle), user.created))
 
+      target.send('312 %s %s %s :%s' % 
+        (target.nickname, user.nickname, config.Server.name, config.Server.name))
+      
       target.send('318 %s %s End of /WHOIS list.' % (target.nickname, user.nickname))
     else:
       raw_error._401(target, params[0])

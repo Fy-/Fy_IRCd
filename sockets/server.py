@@ -32,8 +32,6 @@ class Sockets(object):
 
     while True:
       user = User.get(socket)
-      user.idle = int(time.time())
-      user.save()
 
       try: line = user.socket['file'].readline()
       except: break
@@ -41,6 +39,7 @@ class Sockets(object):
       if not line:
         break
       else:
+        user.update_idle(line)
         raw, params = Message.from_string(line)
         message = Message(user, raw=raw, params=params)
 

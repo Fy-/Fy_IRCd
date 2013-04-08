@@ -97,6 +97,11 @@ class User(BaseModel):
     if self.nickname:
       del User.nickname_to_user[_lower(self.nickname)]
 
+  def update_idle(self, line):
+    if 'PONG :' not in line and 'PRIVMSG' not in line:
+      self.idle = int(time.time())
+      self.save()
+
   def update_aliveness(self):
     self.status['last_ping'] = int(time.time())
     self.status['sent_ping'] = False
