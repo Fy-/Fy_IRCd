@@ -1,7 +1,6 @@
-FyIRCd (Python IRC Server)
+FyIRCd
 ======
 
-Why choose to make an IRC Server…? Cause I can ^_^ (gtfo :3)
 One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground.
 
 # Testing FyIRCd
