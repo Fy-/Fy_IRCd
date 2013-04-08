@@ -54,6 +54,7 @@ def kill(target, params):
         user = User.by_nickname(params[0])
         user.status['quit_txt']  = '☠ /kill by %s (%s)' % (target.nickname, reason)
         user.status['kill_form'] = target
+        user.save()
         user.disconnect()
       except:
         raw_error._401(target, params[0])
