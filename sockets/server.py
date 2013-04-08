@@ -15,7 +15,7 @@ class Sockets(object):
 
   @staticmethod
   def close(socket):
-    tools.log.info('Client disconnected: %s' % User.get(socket))
+    tools.log.debug('Client disconnected: %s' % User.get(socket))
 
     User.get(socket).quit()
     User.get(socket).delete()
@@ -27,7 +27,7 @@ class Sockets(object):
     user = User(socket, address)
     user.save()
 
-    tools.log.info('New client: %s' % user)
+    tools.log.debug('New client: %s' % user)
     gevent.Greenlet.spawn(Sockets.is_alive, socket)
 
     while True:

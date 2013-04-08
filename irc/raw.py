@@ -55,6 +55,7 @@ def kill(target, params):
         user.status['quit_txt']  = '☠ /kill by %s (%s)' % (target.nickname, reason)
         user.status['kill_form'] = target
         user.save()
+
         user.disconnect()
       except:
         raw_error._401(target, params[0])
@@ -65,7 +66,8 @@ def oper(target, params):
   try:
     if params[1] == config.User.opers[params[0]]:
       target.oper = True
-      
+      target.save()
+
       target.write(':%s %s' %(target, target.modes.add('OW')))
       target.send('381 %s :You are now an IRC Operator' % target.nickname)
       target.send('381 %s :With great power comes great responsibility' % target.nickname)
@@ -198,10 +200,12 @@ def pong(target, params):
   target.update_aliveness()
 
 def quit(target, params):
-  try: target.status['quit_txt'] = params[1]
-  except: target.status['quit_txt'] = '×̯×'
-  target.save()
-  target.disconnect(False)
+  if not target.status['from_kill']:
+    try: target.status['quit_txt'] = params[1]
+    except: target.status['quit_txt'] = '×̯×'
+    
+    target.save()
+    target.disconnect(False)
 
 def user(target, params):
   if len(params) != 4:
@@ -262,7 +266,7 @@ def whois(target, params):
 
       target.send('312 %s %s %s :%s' % 
         (target.nickname, user.nickname, config.Server.name, config.Server.name))
-      
+
       target.send('318 %s %s End of /WHOIS list.' % (target.nickname, user.nickname))
     else:
       raw_error._401(target, params[0])

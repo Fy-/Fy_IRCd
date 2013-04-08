@@ -150,6 +150,7 @@ class User(BaseModel):
     self.write('ERROR: Closing Link: %s' % (error or self.status['quit_txt']))
     try :self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
     except: pass
+    self.save()
 
   def get_key(self):
     return self.socket['socket']
