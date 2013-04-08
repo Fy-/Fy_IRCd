@@ -6,7 +6,11 @@ def _welcome(target):
   if not target.status['welcomed']:
     target.send('001 %s :Welcome to %s %s' % (target.nickname, config.Server.name, target.nickname))
     target.send('002 %s :Your host is "%s", running version %s-%s' % (target.nickname, config.Server.name, config.Server.name, config.Server.vers))
+    target.send('003 %s :This server was created on %s' % (target.nickname, config.Misc.created))
+
+    # todo true 005.
     target.send('005 %s :%s NICKLEN=50 CHANNELLEN=50 TOPICLEN=390 :are supported by this server' % (target.nickname, target.nickname))
+    
     target.send('251 %s :%s :There is %s users on %s' % (target.nickname, target.nickname, len(User.all()), config.Server.name))
     target.send('254 %s :%s :There is %s channels on %s' % (target.nickname, target.nickname, len(Channel.all()), config.Server.name))
 

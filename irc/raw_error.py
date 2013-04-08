@@ -35,3 +35,6 @@ def _462(target):
 def _461(target, attr):
   nickname = target.nickname or '*'
   target.send('461 %s %s :Not enough parameters' % (nickname, attr))
+
+def _481(target):
+  target.send('481 %s :Permission Denied - You\'re not an IRC operator' % (target.nickname))

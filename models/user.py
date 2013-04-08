@@ -3,7 +3,37 @@ from gevent import socket
 from models import BaseModel, Error
 from tools import _lower
 
-import config, gevent, tools, time
+import config, gevent, tools, time, datetime
+
+class UserMode(object):
+  modes     = 'OWovh'
+  allow_var = ''
+
+  def __init__(self, user):
+    self.user    = user
+    self.current = []
+    self.var     = {}
+
+  def has(self, mode):
+    return mode in self.current
+
+  def add(self, mode, var=None):
+    result = ''
+    for i in range(0, len(mode)):
+      if mode[i] in UserMode.modes:
+        self.current.append(mode[i])
+        result += mode[i]
+    
+    return 'MODE %s +%s' % (self.user.nickname, result)
+
+  def get(self):
+    modes = ''
+    for mode in self.current:
+      modes += mode
+
+    if modes:
+      return 'MODE %s +%s' % (self.user.nickname, mode)
+    return False
 
 class User(BaseModel):
   nickname_to_user = {}
@@ -20,9 +50,11 @@ class User(BaseModel):
       'sent_ping'   : False,
       'last_ping'   : False,
       'welcomed'    : False,
-      'quit_txt'    : ''
+      'quit_txt'    : '',
+      'kill_from'   : False
     }
 
+    self.modes      = UserMode(self)
     self.channels   = set()
     self.relatives  = set()
     self.nickname   = None
@@ -31,6 +63,8 @@ class User(BaseModel):
     self.realname   = None
     self.hostname   = None
     self.away       = None
+    self.created    = int(time.time())
+    self.idle       = self.created
 
   def rename(self, new_name):
     User._update_nickname_to_user(self.nickname, new_name, self.get_key())
@@ -46,7 +80,10 @@ class User(BaseModel):
     channel.part(self)
 
   def quit(self):
-    self.write_relatives(':%s QUIT :%s' % (self, self.status['quit_txt']), True) 
+    if self.status['kill_from']:
+      self.write_relatives(':%s KILL %s :%s' % (self.status['kill_from'], self.nickname, self.status['quit_txt']), True) 
+    else:
+      self.write_relatives(':%s QUIT :%s' % (self, self.status['quit_txt']), True) 
 
     for channel in self.channels:
       channel.users.discard(self)
@@ -104,8 +141,8 @@ class User(BaseModel):
     if not ignore_me:
       self.send(data)
 
-  def disconnect(self, error=False):
-    self.write('ERROR: ❤ %s ❤' % (self.status['quit_txt'] or error))
+  def disconnect(self, error=None):
+    self.write('ERROR: Closing Link: %s' % (error or self.status['quit_txt']))
     try :self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
     except: pass
 
@@ -122,12 +159,14 @@ class User(BaseModel):
   def _set_key(self, socket):
     self.socket['socket'] = socket
     self.socket['file']   = socket.makefile('rw')
+    self.save()
 
   def _write(self, data):
     tools.log.debug('%s >>> %s' % (self, data))
     try:
       self.socket['file'].write('%s\r\n' % data)
       self.socket['file'].flush()
+      self.save()
     except:
       pass
 

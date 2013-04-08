@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-import re
+import re, datetime
 
 class Misc(object):
-  debug  = True
+  debug   = True
+  
+  created = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
 
-  informations = [
+  admins  = [
     'Server de test de FyIRd.com',
     'https://github.com/Fy-/FyIRCd',
     'm@fy.to'
@@ -26,6 +28,7 @@ class User(object):
 
 class Server(object):
   port   = 6667
+  #ip     = '178.32.42.40'
   ip     = '0.0.0.0'
   name   = 'FyIRCd.com'
   vers   = '0.1-dev'
