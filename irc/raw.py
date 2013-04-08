@@ -71,8 +71,10 @@ def oper(target, params):
       target.write(':%s %s' %(target, target.modes.add('OW')))
       target.send('381 %s :You are now an IRC Operator' % target.nickname)
       target.send('381 %s :With great power comes great responsibility' % target.nickname)
+    else:
+      target.send('464 %s :Nice try ❤' % target.nickname)
   except:
-    target.send('464 %s :Nice try ❤')
+    target.send('464 %s :Nice try ❤' % target.nickname)
 
 """
   Server command
@@ -200,10 +202,10 @@ def pong(target, params):
   target.update_aliveness()
 
 def quit(target, params):
-  if not target.status['kill_from']:
+  if target.status['shutdown'] == False:
     try: target.status['quit_txt'] = params[1]
     except: target.status['quit_txt'] = '×̯×'
-    
+
     target.save()
     target.disconnect(False)
 

@@ -47,6 +47,7 @@ class User(BaseModel):
     }
 
     self.status  =  {
+      'shutdown'    : False,
       'sent_ping'   : False,
       'last_ping'   : False,
       'welcomed'    : False,
@@ -147,11 +148,13 @@ class User(BaseModel):
       self.send(data)
 
   def disconnect(self, error=None):
+    self.status['shutdown'] = True
     self.write('ERROR: Closing Link: %s' % (error or self.status['quit_txt']))
-    try :self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
-    except: pass
     self.save()
 
+    try :self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
+    except: pass
+    
   def get_key(self):
     return self.socket['socket']
 
@@ -168,13 +171,13 @@ class User(BaseModel):
     self.save()
 
   def _write(self, data):
-    tools.log.debug('%s >>> %s' % (self, data))
     try:
-      self.socket['file'].write('%s\r\n' % data)
-      self.socket['file'].flush()
-      self.save()
+      if self.status['shutdown'] == False:
+        tools.log.debug('%s >>> %s' % (self, data))
+        self.socket['file'].write('%s\r\n' % data)
+        self.socket['file'].flush()
     except:
-      pass
+      self.disconnect('Peer: Oops!... I Did It Again')
 
   @staticmethod
   def _update_nickname_to_user(old, new, socket):
