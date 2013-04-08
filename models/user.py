@@ -30,6 +30,7 @@ class User(BaseModel):
     self.username   = None
     self.realname   = None
     self.hostname   = None
+    self.away       = None
 
   def rename(self, new_name):
     User._update_nickname_to_user(self.nickname, new_name, self.get_key())

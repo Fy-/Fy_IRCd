@@ -11,7 +11,7 @@ def run():
 
   tools.log.info('Starting FyIRCd, listening on %s:%s' % server_config)
   pool   = gevent.pool.Pool(10000)
-  server = gevent.server.StreamServer(server_config, Sockets.handle, spawn=pool)
+  server = gevent.server.StreamServer(server_config, Sockets.handle, spawn=pool, backlog=1024)
 
   server.serve_forever()
 

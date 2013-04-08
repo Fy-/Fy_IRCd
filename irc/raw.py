@@ -7,6 +7,25 @@ import raw_error, raw_init, raw_utils
 import config, time
 
 """
+  (RFC 1459) // To do 
+"""
+def admin(target, params):
+  target.send('256 %s :Administrative info about %s' % (target.nickname, config.Server.name))
+  target.send('257 %s :%s' % (target.nickname, config.Misc.informations[0]))
+  target.send('258 %s :%s' % (target.nickname, config.Misc.informations[1]))
+  target.send('259 %s :%s' % (target.nickname, config.Misc.informations[2]))
+
+def away(target, params):
+  try:
+    target.away = params[0]
+    target.send('306 %s :You have been marked as being away' % target.nickname)
+  except:
+    target.away = None
+    target.send('305 %s :You are no longer marked as being away' % target.nickname)
+
+  target.save()
+
+"""
   Channel command
 """
 def _unknown(target, raw, params):
@@ -89,10 +108,10 @@ def privmsg(target, params, cmd='PRIVMSG'):
         raw_error._401(target, params[0])
     else:
       try:
-        source = target
-        to     = User.by_nickname(params[0])
         user   = User.by_nickname(params[0])
-        user.write(':%s %s %s :%s' % (source, cmd, params[0], params[1]))
+        if user.away:
+          target.send('301 %s %s :%s' % (target.nickname, user.nickname, user.away))
+        user.write(':%s %s %s :%s' % (target, cmd, params[0], params[1]))
       except:
         raw_error._401(target, params[0])
 
