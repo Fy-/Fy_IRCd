@@ -34,7 +34,7 @@ class Sockets(object):
       user = User.get(socket)
       user.idle = int(time.time())
       user.save()
-      print int(time.time()), user.idle
+
       try: line = user.socket['file'].readline()
       except: break
       
