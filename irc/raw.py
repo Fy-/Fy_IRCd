@@ -200,7 +200,7 @@ def pong(target, params):
   target.update_aliveness()
 
 def quit(target, params):
-  if not target.status['from_kill']:
+  if not target.status['kill_from']:
     try: target.status['quit_txt'] = params[1]
     except: target.status['quit_txt'] = '×̯×'
     
