@@ -176,7 +176,7 @@ class User(BaseModel):
       if self.status['shutdown'] == False:
         tools.log.debug('%s >>> %s' % (self, data))
         self.socket['file'].write('%s\r\n' % data)
-        self.socket['file'].flush()tar
+        self.socket['file'].flush()
     except:
       self.disconnect('Peer: Oops!... I Did It Again')
 
