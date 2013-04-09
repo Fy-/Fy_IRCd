@@ -34,9 +34,7 @@ class Sockets(object):
       user = User.get(socket)
 
       try: line = user.socket['file'].readline()
-      except Exception: 
-        print Exception
-        break
+      except: break
       
       if not line:
         break

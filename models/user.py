@@ -114,8 +114,8 @@ class User(BaseModel):
     if self.status['last_ping']:
       if (self.status['last_ping'] + 60) < now:
         self.status['quit_txt'] = 'Ping timeout: %s seconds' % (now - self.status['last_ping'])
-        self.save()
         self.disconnect(self.status['quit_txt'])
+        self.save()
       if (self.status['last_ping'] + 45) < now:
         if not self.status['sent_ping']:
           self.write('PING :%s' % self.status['last_ping'])
@@ -150,10 +150,11 @@ class User(BaseModel):
   def disconnect(self, error=None):
     self.status['shutdown'] = True
     self.write('ERROR: Closing Link: %s' % (error or self.status['quit_txt']))
-    self.save()
 
-    try :self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
-    except: pass
+    try :
+      self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
+    except:
+      self.save()
     
   def get_key(self):
     return self.socket['socket']
@@ -175,7 +176,7 @@ class User(BaseModel):
       if self.status['shutdown'] == False:
         tools.log.debug('%s >>> %s' % (self, data))
         self.socket['file'].write('%s\r\n' % data)
-        self.socket['file'].flush()
+        self.socket['file'].flush()tar
     except:
       self.disconnect('Peer: Oops!... I Did It Again')
 
