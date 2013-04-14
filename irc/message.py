@@ -11,7 +11,12 @@ class Message(object):
 
   def handle(self):
     if hasattr(raw, self.raw):
-      getattr(raw, self.raw)(self.target, self.params)
+      if self.raw != 'user' and self.raw != 'nick':
+        if self.target.is_ready():
+          getattr(raw, self.raw)(self.target, self.params)
+      else:
+        getattr(raw, self.raw)(self.target, self.params)
+        
     else:
       raw._unknown(self.target, self.raw, self.params)
 

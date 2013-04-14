@@ -203,11 +203,10 @@ def pong(target, params):
 
 def quit(target, params):
   if target.status['shutdown'] == False:
-    try: target.status['quit_txt'] = params[1]
-    except: target.status['quit_txt'] = '×̯×'
+    try: quit_msg = params[1]
+    except: quit_msg = '×̯×'
 
-    target.save()
-    target.disconnect(False)
+    target.disconnect(quit_msg)
 
 def user(target, params):
   if len(params) != 4:

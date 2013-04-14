@@ -98,6 +98,8 @@ class User(BaseModel):
     if self.nickname:
       del User.nickname_to_user[_lower(self.nickname)]
 
+    self.delete()
+
   def update_idle(self, line):
     if 'PONG :' not in line and 'PRIVMSG' not in line:
       self.idle = int(time.time())
@@ -107,6 +109,13 @@ class User(BaseModel):
     self.status['last_ping'] = int(time.time())
     self.status['sent_ping'] = False
     self.save()
+
+  def is_ready(self):
+    if self.status['welcomed']:
+      return True
+    else:
+      self.disconnect('gtfo')
+      return False
 
   def is_alive(self):
     now = int(time.time())
@@ -134,9 +143,12 @@ class User(BaseModel):
     self._write(':%s %s' % (config.Server.name, data))
 
   def write_relatives(self, data, ignore_me=False):
-    for relative in self.relatives:
-        relative.write(data)
+    relatives_copy = self.relatives.copy()
+    for relative in relatives_copy:
+      relative.write(data)
 
+    del relatives_copy
+    
     if not ignore_me:
       self.write(data)
 
@@ -149,12 +161,18 @@ class User(BaseModel):
 
   def disconnect(self, error=None):
     self.status['shutdown'] = True
-    self.write('ERROR: Closing Link: %s' % (error or self.status['quit_txt']))
 
-    try :
-      self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
-    except:
-      self.save()
+    if not error and self.status['quit_txt'] == '': 
+      self.status['quit_txt']
+    elif self.status['quit_txt'] == '': 
+      self.status['quit_txt'] = error    
+
+    self.write('ERROR: Closing Link: %s' % self.status['quit_txt'])
+
+    try : self.socket['socket'].shutdown(gevent.socket.SHUT_WR)
+    except: self.status['shutdown'] = True
+
+    self.save()
     
   def get_key(self):
     return self.socket['socket']

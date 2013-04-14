@@ -11,16 +11,16 @@ class Sockets(object):
       try: User.get(socket).is_alive()
       except: break
       
-      gevent.sleep(10)
+      gevent.sleep(5)
 
   @staticmethod
   def close(socket):
     tools.log.debug('Client disconnected: %s' % User.get(socket))
 
     User.get(socket).quit()
-    User.get(socket).delete()
-
-    socket.close()
+    
+    try: socket.close()
+    except: pass
 
   @staticmethod
   def handle(socket, address):
@@ -36,7 +36,7 @@ class Sockets(object):
       try: line = user.socket['file'].readline()
       except: break
       
-      if not line:
+      if not line or user.status['shutdown'] == True:
         break
       else:
         user.update_idle(line)
