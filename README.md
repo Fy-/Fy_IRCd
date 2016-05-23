@@ -3,8 +3,10 @@ FyIRCd
 
 One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground.
 
-# Testing FyIRCd
-__irc://fyircd.com/fyircd__ (server: FyIRCd.com 6667 / channel #FyIRCd)
+# Install & Run FyIRCd
+1. git clone https://github.com/Fy-/FyIRCd.git
+2. pip install -r requirements.txt
+3. ./fyircd
 
 # Unique features
 __1. Best hostnames ever:__ Using markov chains and "GNU/Linux: Guide to Installation and Usage"
@@ -20,7 +22,4 @@ __2. Server side smileys:__
  ':(': '😒', ':)': '😊', ':D': '😃', '>.<'  : '😆', '^^': '😄', ':|': '😐', ':p': '😋', '=)': '㋡', '<3': '❤', ':x': '☠', '(note)'  : '♫', '(mail)'  : '✉', '(star)'  : '✩', '(valid)' : '✔', '(flower)': '❀', '(plane)' : '✈', '(copy)'  : '©', '(tel)'   : '☎', 'x.x'  : '٩(×̯×)۶', 'o.o'  : 'Ꙩ_Ꙩ', '<3.<3' : '❤‿❤'
 ```
 
-# Running FyIRCd
-1. git clone https://github.com/Fy-/FyIRCd.git
-2. pip install -r requirements.txt
-3. ./fyircd
+
