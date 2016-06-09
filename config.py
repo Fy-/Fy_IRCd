@@ -28,7 +28,6 @@ class User(object):
 
 class Server(object):
   port   = 6667
-  #ip     = '178.32.42.40'
   ip     = '0.0.0.0'
   name   = 'FyIRCd.com'
   vers   = '0.1-dev'

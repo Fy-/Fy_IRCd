@@ -2,14 +2,13 @@
 from models import User, Channel
 from tools import _lower
 from libs.markov import construct_sentence
-from gevent.dns import resolve_reverse
+from gevent.socket import gethostbyaddr
 from socket import inet_aton
 import config, socket
 
 def _reverse(ip):
-  packed_ip = inet_aton(ip)
   try:
-    return (3, resolve_reverse(packed_ip)[1])
+    return (3, gethostbyaddr(ip)[0])
   except:
     return (4, '0.0.FyIRCd.com')
 

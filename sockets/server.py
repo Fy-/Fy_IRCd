@@ -14,10 +14,10 @@ class Sockets(object):
       gevent.sleep(5)
 
   @staticmethod
-  def close(socket):
+  def close(user, socket):
     tools.log.debug('Client disconnected: %s' % User.get(socket))
 
-    User.get(socket).quit()
+    user.quit()
     
     try: socket.close()
     except: pass
@@ -43,4 +43,4 @@ class Sockets(object):
         raw, params = Message.from_string(line)
         message = Message(user, raw=raw, params=params)
 
-    Sockets.close(socket)
+    Sockets.close(user, socket)
