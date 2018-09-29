@@ -6,9 +6,11 @@ One day maybe FyIRCd will be a full-featured IRC server, for now it's just a pla
 # Install & Run FyIRCd
 1. git clone https://github.com/Fy-/FyIRCd.git
 2. pip install -r requirements.txt
-3. ./fyircd
+3. py run.py
 
 # Unique features
+Extensions and services are not active with the new version, please be patient.
+
 __1. Best hostnames ever:__ Using markov chains and "GNU/Linux: Guide to Installation and Usage"
 ```
   @when.you.boot.debian.a.FyIRCd.com
