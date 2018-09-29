@@ -9,7 +9,7 @@ def main():
         'ipv6': True,
         'motd': os.path.join(os.path.dirname(__file__), 'motd.txt'),
         'opers': {
-            'fy': 'stay',
+            'fy': 'coucou',
         }
     }
     srv = fyircd.Server(config)
