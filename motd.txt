@@ -6,4 +6,4 @@
 `--'     .-'  /    `--' `--' '--'  `-----'  `---'  
          `---'                                     
 
-                 www.FyIRCd.com
+                 https://github.com/Fy-/Fy_IRCd/
