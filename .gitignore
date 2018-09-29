@@ -1,3 +1,6 @@
+env/
+we.py
+
 *.py[cod]
 
 # C extensions
