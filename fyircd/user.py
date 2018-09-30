@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-    fyircd.user
-    ~~~~~~~~~~~~~~~~
-    :license: BSD, see LICENSE for more details.
+	fyircd.user
+	~~~~~~~~~~~~~~~~
+	:license: BSD, see LICENSE for more details.
 """
 import time, logging
 import regex as re
@@ -11,263 +11,271 @@ import gevent
 import uuid
 import hashlib
 
+def to_str(bytes_or_str):
+    if isinstance(bytes_or_str, bytes):
+        value = bytes_or_str.decode() # uses 'utf-8' for encoding
+    else:
+        value = bytes_or_str
+    return value # Instance of str
+
 class UserModes(object):
-    supported_modes = {
-        # https://github.com/LukeB42/psyrcd/blob/master/psyrcd.py - Uppercase modes are oper-only
-        'A': "IRC Administrator.",
-        #           'b':"Bot.",
-        'D': "Deaf. User does not recieve channel messages.",
-        'H': "Hide ircop line in /whois.",
-        #           'I':"Invisible. Doesn't appear in /whois, /who, /names, doesn't appear to /join, /part or /quit",
-        'L': "Connection is a remote server link.",
-        'N': "Network Administrator.",
-        'O': "IRC Operator.",
-        #           'P':"Protected. Blocks users from kicking, killing, or deoping the user.",
-        #           'p':"Hidden Channels. Hides the channels line in the users /whois",
-        'Q': "Kick Block. Cannot be /kicked from channels.",
-        'S': "See Hidden Channels. Allows the IRC operator to see +p and +s channels in /list",
-        'W': "Wallops. Recieve connect, disconnect and traceback notices.",
-        #           'X':"Whois Notification. Allows the IRC operator to see when users /whois him or her.",
-        'x': "Masked hostname. Hides the users hostname or IP address from other users.",
-        'r': "Registed user ... Try /msg nickserv help",
-        'Z': "SSL connection."
-    }
+	supported_modes = {
+		# https://github.com/LukeB42/psyrcd/blob/master/psyrcd.py - Uppercase modes are oper-only
+		'A': "IRC Administrator.",
+		#           'b':"Bot.",
+		'D': "Deaf. User does not recieve channel messages.",
+		'H': "Hide ircop line in /whois.",
+		#           'I':"Invisible. Doesn't appear in /whois, /who, /names, doesn't appear to /join, /part or /quit",
+		'L': "Connection is a remote server link.",
+		'N': "Network Administrator.",
+		'O': "IRC Operator.",
+		#           'P':"Protected. Blocks users from kicking, killing, or deoping the user.",
+		#           'p':"Hidden Channels. Hides the channels line in the users /whois",
+		'Q': "Kick Block. Cannot be /kicked from channels.",
+		'S': "See Hidden Channels. Allows the IRC operator to see +p and +s channels in /list",
+		'W': "Wallops. Recieve connect, disconnect and traceback notices.",
+		#           'X':"Whois Notification. Allows the IRC operator to see when users /whois him or her.",
+		'x': "Masked hostname. Hides the users hostname or IP address from other users.",
+		'r': "Registed user ... Try /msg nickserv help",
+		'Z': "SSL connection."
+	}
 
-    def __init__(self, user):
-        self.data = {'x': 1}
-        self.user = user
+	def __init__(self, user):
+		self.data = {'x': 1}
+		self.user = user
 
-    @staticmethod
-    def concat():
-        return ''.join(UserModes.supported_modes.keys())
+	@staticmethod
+	def concat():
+		return ''.join(UserModes.supported_modes.keys())
 
-    def concat_used(self):
-        s = '+'
-        for key, value in self.data.items():
-            if value == 1:
-                s += str(key)
-        return s
+	def concat_used(self):
+		s = '+'
+		for key, value in self.data.items():
+			if value == 1:
+				s += str(key)
+		return s
 
-    def send(self):
-        s = '+'
-        for key, value in self.data.items():
-            if value == 1:
-                s += key
+	def send(self):
+		s = '+'
+		for key, value in self.data.items():
+			if value == 1:
+				s += key
 
-        if len(s) > 1:
-            self.user.write('MODE %s %s' % (self.user.nickname, s))
+		if len(s) > 1:
+			self.user.write('MODE %s %s' % (self.user.nickname, s))
 
 
 class User(object):
-    re_nick = re.compile(r"^[][\`_^{|}A-Za-z][][\`_^{|}A-Za-z0-9]{0,50}$")
-    by_nick = {}
+	re_nick = re.compile(r"^[][\`_^{|}A-Za-z][][\`_^{|}A-Za-z0-9]{0,50}$")
+	by_nick = {}
 
-    #: this is used for services like nickserv.
-    @staticmethod
-    def fake(data, server):
-        user = User(None, None, server, uuid.uuid4())
-    
-        if data['oper'] == True:
-            user.oper = True
-            user.modes.data['O'] = 1
-            user.modes.data['W'] = 1
+	#: this is used for services like nickserv.
+	@staticmethod
+	def fake(data, server):
+		user = User(None, None, server, uuid.uuid4())
 
-        user.nickname = data['nickname']
-        user.realname = data['realname']
-        user.hostname = data['hostname']
-        user.username = data['nickname']
-        user.greet = True
-        User.by_nick[user.nickname.lower()] = user
-        return user
+		if data['oper'] == True:
+			user.oper = True
+			user.modes.data['O'] = 1
+			user.modes.data['W'] = 1
 
-    #: get an user instance for nickname
-    @staticmethod
-    def by_nickname(nick):
-        if nick.lower() in User.by_nick:
-            return User.by_nick[nick.lower()]
-        return False
+		user.nickname = data['nickname']
+		user.realname = data['realname']
+		user.hostname = data['hostname']
+		user.username = data['nickname']
+		user.greet = True
+		User.by_nick[user.nickname.lower()] = user
+		return user
 
-    def __init__(self, socket, address, server, uuid=False):
-        
-        self.server = server
-        self.logger = logging.getLogger('fyircd')
+	#: get an user instance for nickname
+	@staticmethod
+	def by_nickname(nick):
+		if nick.lower() in User.by_nick:
+			return User.by_nick[nick.lower()]
+		return False
 
-        if not uuid:
-            self.ip = address[0]
-            self.socket = socket
-            self.socket_file = socket.makefile('rw', encoding='utf-8')
-            self.fake = False
-            print('*** New user: {1} / {0}'.format(socket, address[0]))
-        else:
-            self.fake = True
-            self.socket = uuid
+	def __init__(self, socket, address, server, uuid=False):
 
-        self.modes = UserModes(self)
-        self.channels = set()
-        self.relatives = set()
-        self.ping = time.time()
-        self.greet = False
-        self.killed_by = None
-        self.nickname = None
-        self.reverse = None
-        self.username = "unknown"
-        self.realname = "unknown"
-        self.hostname = None
-        self.vhost = None
-        self.oper = False
-        self.quit_txt = ""
-        self.disconnected = False
-        self.away = None
-        self.created = int(time.time())
-        self.idle = self.created
-        self.server.users[socket] = self
-        self.service_user = None
+		self.server = server
+		self.logger = logging.getLogger('fyircd')
 
-        if not self.fake:
-            if self.ip in self.server.host_cache:
-                self.hostname = self.server.host_cache[self.ip]
-            else:
-                try:
-                    self.hostname = pysocket.gethostbyaddr(self.ip)[0]
-                except:
-                    self.hostname = self.ip
+		if not uuid:
+			self.ip = address[0]
+			self.socket = socket
+			self.socket_file = socket.makefile('rw')
+			self.fake = False
+			print('*** New user: {1} / {0}'.format(socket, address[0]))
+		else:
+			self.fake = True
+			self.socket = uuid
 
-                self.server.host_cache[self.ip] = self.hostname
+		self.modes = UserModes(self)
+		self.channels = set()
+		self.relatives = set()
+		self.ping = time.time()
+		self.greet = False
+		self.killed_by = None
+		self.nickname = None
+		self.reverse = None
+		self.username = "unknown"
+		self.realname = "unknown"
+		self.hostname = None
+		self.vhost = None
+		self.oper = False
+		self.quit_txt = ""
+		self.disconnected = False
+		self.away = None
+		self.created = int(time.time())
+		self.idle = self.created
+		self.server.users[socket] = self
+		self.service_user = None
 
-        if self.modes.data['x'] == 1 and self.fake == False:
-            self.hostname = hashlib.new('sha512', self.hostname.encode('utf-8')).hexdigest(
-            )[:len(self.hostname.encode('utf-8'))] + server.config['hostmask']
+		if not self.fake:
+			if self.ip in self.server.host_cache:
+				self.hostname = self.server.host_cache[self.ip]
+			else:
+				try:
+					self.hostname = pysocket.gethostbyaddr(self.ip)[0]
+				except:
+					self.hostname = self.ip
 
-    #: user has been greeted?
-    def is_ready(self):
-        return self.greet
+				self.server.host_cache[self.ip] = self.hostname
 
-    #: used for nick 
-    def rename(self, new_name):
-        User._update_nickname(self.nickname, new_name, self)
-        self.nickname = new_name
+		if self.modes.data['x'] == 1 and self.fake == False:
+			self.hostname = hashlib.new('sha512', self.hostname.encode('utf-8')).hexdigest(
+			)[:len(self.hostname.encode('utf-8'))] + server.config['hostmask']
 
-    #: used for idle & exts.
-    def update(self, line):
-        if 'PONG :' not in line:
-            self.idle = int(time.time())
+	#: user has been greeted?
+	def is_ready(self):
+		return self.greet
 
-    #: reply to ping
-    def update_ping(self):
-        self.ping = int(time.time())
+	#: used for nick
+	def rename(self, new_name):
+		User._update_nickname(self.nickname, new_name, self)
+		self.nickname = new_name
 
-    #: used for quit
-    #: remove the user from server.users
-    def quit(self, msg=''):
-        self.quit_txt = msg
-        self.write('QUIT: Closing Link: %s' % self.quit_txt)
+	#: used for idle & exts.
+	def update(self, line):
+		
+		if 'PONG :' not in line:
+			self.idle = int(time.time())
 
-        if self.killed_by:
-            self.write_relatives(':%s KILL %s :%s' % (self.killed_by, self.nickname, self.quit_txt), True)
-        else:
-            self.write_relatives(':%s QUIT :%s' % (self, self.quit_txt), True)
+	#: reply to ping
+	def update_ping(self):
+		self.ping = int(time.time())
 
-        for channel in self.channels:
-            channel.users.discard(self)
+	#: used for quit
+	#: remove the user from server.users
+	def quit(self, msg=''):
+		self.quit_txt = msg
+		self.write('QUIT: Closing Link: %s' % self.quit_txt)
 
-        relatives_copy = self.relatives.copy()
-        for cuser in relatives_copy:
-            cuser.relatives.discard(self)
-        del relatives_copy
+		if self.killed_by:
+			self.write_relatives(':%s KILL %s :%s' % (self.killed_by, self.nickname, self.quit_txt), True)
+		else:
+			self.write_relatives(':%s QUIT :%s' % (self, self.quit_txt), True)
 
-        del User.by_nick[self.nickname.lower()]
-        try:
-            del self.server.users[self.socket]
-        except:
-            pass
+		for channel in self.channels:
+			channel.users.discard(self)
 
-        self.disconnect(quit=False)
+		relatives_copy = self.relatives.copy()
+		for cuser in relatives_copy:
+			cuser.relatives.discard(self)
+		del relatives_copy
 
-    #: disconnect the user close the socket.
-    def disconnect(self, msg='', quit=True):
-        if not self.disconnected:
-            if quit:
-                self.quit(msg or self.quit_txt)
+		del User.by_nick[self.nickname.lower()]
+		try:
+			del self.server.users[self.socket]
+		except:
+			pass
 
-            self.socket.shutdown(gevent.socket.SHUT_WR)
-            self.socket.close()
-            self.disconnected = True
+		self.disconnect(quit=False)
 
-    #: join a channel
-    def join(self, channel):
-        if channel not in self.channels:
-            self.channels.add(channel)
-            channel.join(self)
+	#: disconnect the user close the socket.
+	def disconnect(self, msg='', quit=True):
+		if not self.disconnected:
+			if quit:
+				self.quit(msg or self.quit_txt)
 
-    #: being kick from a channel by source
-    def kick(self, source, channel, reason):
-        if channel in self.channels:
-            self.channels.discard(channel)
-            channel.kick(source, self,reason)
+			self.socket.shutdown(gevent.socket.SHUT_WR)
+			self.socket.close()
+			self.disconnected = True
 
-    #: leave a channel
-    def part(self, channel):
-        if channel in self.channels:
-            self.channels.discard(channel)
-            channel.part(self)
+	#: join a channel
+	def join(self, channel):
+		if channel not in self.channels:
+			self.channels.add(channel)
+			channel.join(self)
 
-    #: helper with server.name (see IRC RFC)
-    def send(self, data):
-        self.write(':%s %s' % (self.server.name, data))
+	#: being kick from a channel by source
+	def kick(self, source, channel, reason):
+		if channel in self.channels:
+			self.channels.discard(channel)
+			channel.kick(source, self, reason)
 
-    #: raw writing
-    def write(self, data):
-        if not self.fake:
-            try:
-                self.socket_file.write('{0}\r\n'.format(data))
-                self.socket_file.flush()
-            except:
-                for channel in self.channels:
-                    channel.users.discard(self)
+	#: leave a channel
+	def part(self, channel):
+		if channel in self.channels:
+			self.channels.discard(channel)
+			channel.part(self)
 
-                relatives_copy = self.relatives.copy()
-                for cuser in relatives_copy:
-                    cuser.relatives.discard(self)
-                del relatives_copy
+	#: helper with server.name (see IRC RFC)
+	def send(self, data):
+		self.write(':%s %s' % (self.server.name, data))
 
-                del User.by_nick[self.nickname.lower()]
-                try:
-                    del self.server.users[self.socket]
-                except:
-                    pass 
-            print('>>>>>>>>>', '{0}\r\n'.format(data))
-        else:
-            pass
+	#: raw writing
+	def write(self, data):
+		if not self.fake:
 
-    #: send a message to all relatives, used for quit (for example)
-    def write_relatives(self, data, ignore_me=False):
-        relatives_copy = self.relatives.copy()
-        for relative in relatives_copy:
-            relative.write(data)
+			try:
+				self.socket_file.write(to_str('{0}\r\n'.format(str(data))))
+				self.socket_file.flush()
+			except:
+				for channel in self.channels:
+					channel.users.discard(self)
 
-        del relatives_copy
-        if not ignore_me:
-            self.write(data)
+				relatives_copy = self.relatives.copy()
+				for cuser in relatives_copy:
+					cuser.relatives.discard(self)
+				del relatives_copy
 
-    #: same as send but to all relatives
-    def send_relatives(self, data, ignore_me=False):
-        for relative in self.relatives:
-            relative.send(data)
+				del User.by_nick[self.nickname.lower()]
+				try:
+					del self.server.users[self.socket]
+				except:
+					pass
+			print('>>>>>>>>>', '{0}\r\n'.format(data))
+		else:
+			pass
 
-        if not ignore_me:
-            self.send(data)
+	#: send a message to all relatives, used for quit (for example)
+	def write_relatives(self, data, ignore_me=False):
+		relatives_copy = self.relatives.copy()
+		for relative in relatives_copy:
+			relative.write(data)
 
-    #: helper for rename
-    def _update_nickname(old, new, user):
-        User.by_nick[new.lower()] = user
+		del relatives_copy
+		if not ignore_me:
+			self.write(data)
 
-        if old:
-            del User.by_nick[old.lower()]
+	#: same as send but to all relatives
+	def send_relatives(self, data, ignore_me=False):
+		for relative in self.relatives:
+			relative.send(data)
 
-    #: return a string corresponding to the user IRC style: nick!username@hostname
-    def __str__(self):
-        if self.nickname:
-            return '%s!%s@%s' % (self.nickname, self.username, self.hostname)
-        else:
-            return self.ip
+		if not ignore_me:
+			self.send(data)
 
+	#: helper for rename
+	def _update_nickname(old, new, user):
+		User.by_nick[new.lower()] = user
+
+		if old:
+			del User.by_nick[old.lower()]
+
+	#: return a string corresponding to the user IRC style: nick!username@hostname
+	def __str__(self):
+		if self.nickname:
+			return '%s!%s@%s' % (self.nickname, self.username, self.hostname)
+		else:
+			return self.ip
