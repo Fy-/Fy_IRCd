@@ -9,16 +9,11 @@ def main():
         'ipv6': True,
         'motd': os.path.join(os.path.dirname(__file__), 'motd.txt'),
         'opers': {
-<<<<<<< HEAD
             'fy': 'stay',
         },
         'auto_join' : ['#FyIRCd'],
         'hostmask' : '.fy.to',
         'exts' : ['avengers']
-=======
-            'fy': 'coucou',
-        }
->>>>>>> origin/master
     }
     srv = fyircd.Server(config)
 
