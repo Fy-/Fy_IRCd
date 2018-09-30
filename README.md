@@ -10,6 +10,7 @@ One day maybe FyIRCd will be a full-featured IRC server, for now it's just a pla
 
 # Services: fyircd.ext.avengers
 Just a start - need to refactor the code.
+https://github.com/Fy-/Fy_IRCd/tree/master/fyircd/ext/avengers
 ```
   OperServ (Loki)
   /oper <user> <pass>
