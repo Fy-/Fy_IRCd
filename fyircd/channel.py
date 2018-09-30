@@ -254,7 +254,8 @@ class Channel(object):
             self.delete()
 
     def write(self, message, ignore_me=False):
-        for cuser in self.users:
+        users_copy = self.users.copy()
+        for cuser in users_copy:
             if ignore_me != cuser:
                 cuser.write(message)
 

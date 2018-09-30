@@ -167,8 +167,8 @@ def _welcome(target):
                 ChannelModes.concat()
             )
         )
-
-        options = 'CHANTYPES=# PREFIX=(qaohv)~&@%+ NICKLEN=50 CHANNELLEN=50 TOPICLEN=390 AWAYLEN=160'
+ 
+        options = 'CHANTYPES=# CHARSET=utf-8 PREFIX=(qaohv)~&@%+ NICKLEN=50 CHANNELLEN=50 TOPICLEN=390 AWAYLEN=160'
         target.send(
             '005 %s :%s %s NETWORK=%s :Are supported by this server' %
             (target.nickname, target.nickname, options, target.server.name)
