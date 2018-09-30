@@ -15,7 +15,7 @@ One day maybe FyIRCd will be a full-featured IRC server, for now it's just a pla
 ```
 
 # Unique features
-Extensions and services are not active with the new version, please be patient.
+Extensions are not active with the new version, please be patient.
 
 __1. Best hostnames ever:__ Using markov chains and "GNU/Linux: Guide to Installation and Usage"
 ```
