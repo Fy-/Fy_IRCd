@@ -24,6 +24,12 @@ Just a start - need to refactor the code.
   /msg chanserv register <channel>
   /msg chanserv assign <channel> <bot_name>
   /msg chanserv help
+  
+  bot_list = [
+    'Deadpool', 'BlackWindow', 'Domino', 'Thor', 'IronMan', 'TheWasp', 'Hulk', 'TheCaptain', 'Hawkeye',
+    'ScarletWitch', 'BackPanther', 'Mantis', 'She-Hulk', 'DoctorStrange', 'Spider-Man', 'Vision',
+    'WarMachine', 'Logan'
+  ] In the start I wanted to add quote for each from comics and MCU.
 ```
 
 # Unique features
