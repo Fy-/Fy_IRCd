@@ -8,7 +8,7 @@ One day maybe FyIRCd will be a full-featured IRC server, for now it's just a pla
 2. pip install -r requirements.txt
 3. py run.py
 
-# Init services
+# Services: fyircd.ext.avengers
 ```
   /oper <user> <pass>
   /msg loki initdb
