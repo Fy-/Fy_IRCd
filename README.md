@@ -1,9 +1,9 @@
 FyIRCd
 ======
 
-One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground.
+One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground. (Dev server irc://home.fy.to:6667)
 
-# Install & Run FyIRCd
+#666 Install & Run FyIRCd
 1. git clone https://github.com/Fy-/FyIRCd.git
 2. pip install -r requirements.txt
 3. py run.py
