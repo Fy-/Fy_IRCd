@@ -7,3 +7,4 @@ Jinja2==2.10
 MarkupSafe==1.0
 regex==2018.8.29
 Werkzeug==0.14.1
+SQLAlchemy==1.2.12
