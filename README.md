@@ -8,6 +8,10 @@ One day maybe FyIRCd will be a full-featured IRC server, for now it's just a pla
 2. pip install -r requirements.txt
 3. py run.py
 
+# Init services
+/oper <user> <pass>
+/msg loki initdb
+
 # Unique features
 Extensions and services are not active with the new version, please be patient.
 
