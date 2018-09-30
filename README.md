@@ -9,9 +9,21 @@ One day maybe FyIRCd will be a full-featured IRC server, for now it's just a pla
 3. py run.py
 
 # Services: fyircd.ext.avengers
+Just a start - need to refactor the code.
 ```
+  OperServ (Loki)
   /oper <user> <pass>
   /msg loki initdb
+  
+  NickServ
+  /msg nickserv register <pass> <mail>
+  /msg nickserv identify <pass>
+  /msg nickserv help
+  
+  ChanServ
+  /msg chanserv register <channel>
+  /msg chanserv assign <channel> <bot_name>
+  /msg chanserv help
 ```
 
 # Unique features
