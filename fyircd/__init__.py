@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+    fyircd
+    ~~~~~~~~~~~~~~~~
+    :license: BSD, see LICENSE for more details.
+"""
 import logging
 
 from fyircd.server import Server

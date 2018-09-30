@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+    fyircd.message
+    ~~~~~~~~~~~~~~~~
+    Parse IRC
+    :license: BSD, see LICENSE for more details.
+"""
 import fyircd.raw as raw
+
 
 
 class Message(object):
@@ -10,6 +17,8 @@ class Message(object):
 
         self.handle()
 
+    #: check if a command is handle and then call the function after parsing parameters.
+    #: don't forget IRC is a realy shitty protcol.
     def handle(self):
         if hasattr(raw, self.raw):
             if self.raw != 'user' and self.raw != 'nick':
@@ -21,11 +30,11 @@ class Message(object):
         else:
             raw._unknown(self.target, self.raw, self.params)
 
+    #: parse a line
     @staticmethod
     def from_string(line):
         if len(line) <= 512:
             line = line.strip(' \t\n\r')
-            #tools.log.debug('<<< %s' % line)
 
             x = line.split(' ', 1)
             command = x[0].upper()

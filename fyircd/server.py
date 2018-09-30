@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
+"""
+    fyircd.server
+    ~~~~~~~~~~~~~~~~
+    :license: BSD, see LICENSE for more details.
+"""
 import time, logging, signal, sys, datetime
 from gevent.server import StreamServer
 from gevent.pool import Pool
-import gevent.monkey
-gevent.monkey.patch_all()
+from gevent import monkey; monkey.patch_all()
+from gevent import Greenlet
 
 from fyircd.user import User
 from fyircd.message import Message
-
+from fyircd.ext import fake_users, load_ext, when_server_ready
+from fyircd.channel import Channel
 
 class Server(object):
     default_config = {
@@ -33,18 +39,23 @@ class Server(object):
         self.version = 'FyIRCd 0.1.0'
         self.logger = logging.getLogger('fyircd')
         self.created = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
-        self.users = {}
-        self.users_by_nick = {}
 
-        self.channels = {}
+        self.users = {}
+
         self.services = []
-        self.extensions = []
         self.host_cache = {}
 
-        self.before_message_funcs = {}
-        self.after_message_funcs = {}
-        self.on_connect_funcs = {}
-        self.on_disconnect_funcs = {}
+        #self.before_message_funcs = {}
+        #self.after_message_funcs = {}
+        #self.on_connect_funcs = {}
+        #self.on_disconnect_funcs = {}
+
+        for ext in config.get('exts'):
+            load_ext(ext)
+
+        for user_data in fake_users:
+            u = User.fake(user_data, self)
+
 
         if config.get('motd'):
             with open(config['motd']) as f:
@@ -52,8 +63,14 @@ class Server(object):
         else:
             self.motd = [self.name]
 
+
+        for cb in when_server_ready:
+            cb(self)
+
     def handle(self, socket, address):
         user = User(socket, address, self)
+        #: gevent.Greenlet.spawn(Server.is_alive, socket)
+        #: gevent.Greenlet.spawn(Server.update, socket) gevent.sleep(5)
         while True:
             try:
                 line = user.socket_file.readline()
@@ -69,9 +86,16 @@ class Server(object):
                 raw, params = Message.from_string(line)
                 message = Message(user, raw=raw, params=params)
 
-        del self.users[socket]
+        try:
+            self.users[socket].quit()
+            del self.users[socket]
+            
+        except:
+            pass
+
         user.quit('Write error: Connection reset by peer')
 
+    '''
     def update(self):
         _users = [user for user in self.users.values() if (time.time() - user.ping) > self.ping_timeout]
         for user in _users:
@@ -85,6 +109,7 @@ class Server(object):
                 pass
             except socket.error:
                 user.quit("Write error: Connection reset by peer")
+    '''
 
     def signal_handler(self, signum, frame):
         self.logger.info('Stoping FyIRCd ... Byebye.')

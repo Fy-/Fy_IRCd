@@ -10,7 +10,10 @@ def main():
         'motd': os.path.join(os.path.dirname(__file__), 'motd.txt'),
         'opers': {
             'fy': 'stay',
-        }
+        },
+        'auto_join' : ['#FyIRCd'],
+        'hostmask' : '.fy.to',
+        'exts' : ['avengers']
     }
     srv = fyircd.Server(config)
 

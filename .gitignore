@@ -1,5 +1,6 @@
 env/
 we.py
+services.db
 
 *.py[cod]
 

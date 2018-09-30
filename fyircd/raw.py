@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
+"""
+    fyircd.raw
+    ~~~~~~~~~~~~~~~~
+    :license: BSD, see LICENSE for more details.
+"""
 import time
 
-from fyircd.user import User
-from fyircd.channel import Channel
-from fyircd.ext import raw_callback
+from fyircd.user import User, UserModes
+from fyircd.channel import Channel, ChannelModes
+from fyircd.ext import user_privmsg_callback, chan_privmsg_callback
 
 
 def _unknown(target, raw, params):
@@ -67,6 +72,9 @@ def _461(target, attr):
 def _481(target):
     target.send('481 %s :Permission Denied - You\'re not an IRC operator' % (target.nickname))
 
+def _482(target, channel):
+    target.send('482 %s :You\'re not a channel operator' % (channel.name))
+
 
 """
     IRC Operator
@@ -77,7 +85,7 @@ def kill(target, params):
     if len(params) == 0:
         _461(target, 'KILL')
     else:
-        if 'O' in target.modes:
+        if 'O' in target.modes.data:
             try:
                 if len(params) == 1: reason = 'Why not...'
                 else: reason = params[1]
@@ -97,10 +105,10 @@ def oper(target, params):
     if params[1] == target.server.config['opers'][params[0]]:
         target.oper = True
 
-        #target._write(':%s %s' %(target, target.modes.add('OW')))
-        target.modes['O'] = 1
-        target.modes['W'] = 1
-        target.send_modes()
+        #target.write(':%s %s' %(target, target.modes.add('OW')))
+        target.modes.data['O'] = 1
+        target.modes.data['W'] = 1
+        target.modes.send()
         target.send('381 %s :You are now an IRC Operator' % target.nickname)
         target.send('381 %s :With great power comes great responsibility' % target.nickname)
     else:
@@ -155,8 +163,8 @@ def _welcome(target):
         target.send('003 %s :This server was created on %s' % (target.nickname, target.server.created))
         target.send(
             '004 %s :%s %s %s %s' % (
-                target.nickname, target.server.name, target.server.version, User.concat_modes(),
-                Channel.concat_modes()
+                target.nickname, target.server.name, target.server.version, UserModes.concat(),
+                ChannelModes.concat()
             )
         )
 
@@ -178,7 +186,11 @@ def _welcome(target):
         _send_motd(target)
 
         target.greet = True
-        target.send_modes()
+        target.modes.send()
+        if len(target.server.config['auto_join']) >= 1:
+            for chan in target.server.config['auto_join']:
+                _join(target, chan)
+                print('FORCE JOIN')
 
 
 def _send_motd(target):
@@ -269,7 +281,7 @@ def who(target, params):
                 target.send(
                     '352 %s %s %s %s %s H%s :0 %s' % (
                         target.nickname, channel, user.hostname, user.server.name, user.nickname,
-                        channel.get_prefix_user(user, add=''), user.realname
+                        channel.modes.get_prefix(user, add=''), user.realname
                     )
                 )
 
@@ -286,17 +298,21 @@ def whois(target, params):
                 '311 %s %s %s %s * :%s' %
                 (target.nickname, user.nickname, user.username, user.hostname, user.realname)
             )
+            target.send(
+                '379 %s %s :is using modes %s' %
+                (target.nickname, user.nickname, user.modes.concat_used())
+            )
 
             if len(user.channels) != 0:
                 target.send(
                     '319 %s %s :%s' % (
                         target.nickname, user.nickname, ' '.join(
-                            [str(channel.get_prefix_user(user) + str(channel)) for channel in user.channels]
+                            [str(channel.modes.get_prefix(user) + str(channel)) for channel in user.channels]
                         )
                     )
                 )
 
-            if 'O' in target.modes:
+            if 'O' in user.modes.data:
                 target.send(
                     '313 %s %s :✩✩✩ IRC operator, show some respect! ✩✩✩' % (target.nickname, user.nickname)
                 )
@@ -305,6 +321,17 @@ def whois(target, params):
                 '317 %s %s %s %s :seconds idle, signon time' %
                 (target.nickname, user.nickname, (int(time.time()) - user.idle), user.created)
             )
+
+            if target.modes.data['r'] == 1:
+                target.send(
+                    '307 %s %s  :is identified for this nick' %
+                    (target.nickname, user.nickname)
+                )
+
+                target.send(
+                    '330 %s %s %s :is logged in as' %
+                    (target.nickname, user.nickname, user.nickname)
+                )
 
             target.send(
                 '312 %s %s %s :%s' %
@@ -374,13 +401,13 @@ def _join(target, chan):
         else:
             target.send('331 %s %s %s' % (target.nickname, channel, ':No topic is set'))
 
-        channel.send_modes(target)
+        channel.modes.send(target)
         names(target, [chan])
     else:
         _403(target, chan)
 
 
-def _part(target, chan):
+def _part(target, name):
     channel = Channel.by_id(name)
     if channel:
         target.part(channel)
@@ -412,26 +439,21 @@ def part(target, params):
 
 def topic(target, params):
     if '#' in params[0] and len(params) == 2:
-
         channel = Channel.by_id(params[0])
-        if channel and (
-            (
-                target.oper or target in channel.modes['o'] or target in channel.modes['a'] or
-                target in channel.modes['q']
-            ) or channel.modes['t'] == 0
-        ):
-            channel.topic = params[1]
-            channel.write(':%s TOPIC %s:%s' % (target, channel, params[1]))
-
+        channel.change_topic(target, params[1])
 
 def mode(target, params):
     if '#' in params[0]:
         channel = Channel.by_id(params[0])
         if channel:
             if len(params) == 2:
-                channel.send_modes(target)
+                channel.modes.send(target)
             elif len(params) == 3:
-                channel.add_modes(target, params)
+                r = channel.add(target, params)
+                if r == -1:
+                    _482()
+                elif r == -2:
+                    _403()
         else:
             _401(target, params[0])
 
@@ -446,6 +468,29 @@ def names(target, params):
     else:
         _401(target, params[0])
 
+def kick(target, params):
+    print(params, len(params))
+    if len(params) < 2:
+        _461(target, 'KICK')
+
+    if len(params) == 2:
+        r = '🌹 For fun 🌹' 
+    else:
+        r = params[2]
+
+    channel = Channel.by_id(params[0])
+
+    if channel:
+        user = User.by_nickname(params[1])
+        if user:
+            if channel.modes.allowed(target, 'o'):
+                user.kick(target, channel, r)
+            else:
+                _482(target, channel)
+        else:
+            _401(target, params[2])
+    else:
+        _401(target, params[1])
 
 """
     Messages
@@ -462,12 +507,14 @@ def privmsg(target, params, cmd='PRIVMSG'):
     elif len(params) == 0:
         _411(target)
     else:
-        if raw_callback.get(cmd):
-            params = raw_callback[cmd](params)
-
         if '#' in params[0]:
             channel = Channel.by_id(params[0])
+
             if channel:
+                if chan_privmsg_callback.get(channel.id):
+                    for cb in chan_privmsg_callback[channel.id]:
+                        cb(target, channel, params)
+
                 if channel.can_send(target):
                     channel.write(':%s %s %s :%s' % (target, cmd, params[0], params[1]), ignore_me=target)
                 else:
@@ -475,10 +522,13 @@ def privmsg(target, params, cmd='PRIVMSG'):
             else:
                 _401(target, params[0])
         else:
-            try:
-                user = User.by_nickname(params[0])
+            user = User.by_nickname(params[0])
+            if user:
+                if user_privmsg_callback.get(user.nickname.lower()):
+                    for cb in user_privmsg_callback[user.nickname.lower()]:
+                        cb(target, params)
                 if user.away:
                     target.send('301 %s %s :%s' % (target.nickname, user.nickname, user.away))
                 user.write(':%s %s %s :%s' % (target, cmd, params[0], params[1]))
-            except:
+            else:
                 _401(target, params[0])
