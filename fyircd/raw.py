@@ -72,6 +72,7 @@ def _461(target, attr):
 def _481(target):
     target.send('481 %s :Permission Denied - You\'re not an IRC operator' % (target.nickname))
 
+
 def _482(target, channel):
     target.send('482 %s :You\'re not a channel operator' % (channel.name))
 
@@ -167,7 +168,7 @@ def _welcome(target):
                 ChannelModes.concat()
             )
         )
- 
+
         options = 'CHANTYPES=# CHARSET=utf-8 PREFIX=(qaohv)~&@%+ NICKLEN=50 CHANNELLEN=50 TOPICLEN=390 AWAYLEN=160'
         target.send(
             '005 %s :%s %s NETWORK=%s :Are supported by this server' %
@@ -299,15 +300,17 @@ def whois(target, params):
                 (target.nickname, user.nickname, user.username, user.hostname, user.realname)
             )
             target.send(
-                '379 %s %s :is using modes %s' %
-                (target.nickname, user.nickname, user.modes.concat_used())
+                '379 %s %s :is using modes %s' % (target.nickname, user.nickname, user.modes.concat_used())
             )
 
             if len(user.channels) != 0:
                 target.send(
                     '319 %s %s :%s' % (
                         target.nickname, user.nickname, ' '.join(
-                            [str(channel.modes.get_prefix(user) + str(channel)) for channel in user.channels]
+                            [
+                                str(channel.modes.get_prefix(user) + str(channel))
+                                for channel in user.channels
+                            ]
                         )
                     )
                 )
@@ -323,14 +326,10 @@ def whois(target, params):
             )
 
             if target.modes.data['r'] == 1:
-                target.send(
-                    '307 %s %s  :is identified for this nick' %
-                    (target.nickname, user.nickname)
-                )
+                target.send('307 %s %s  :is identified for this nick' % (target.nickname, user.nickname))
 
                 target.send(
-                    '330 %s %s %s :is logged in as' %
-                    (target.nickname, user.nickname, user.nickname)
+                    '330 %s %s %s :is logged in as' % (target.nickname, user.nickname, user.nickname)
                 )
 
             target.send(
@@ -442,6 +441,7 @@ def topic(target, params):
         channel = Channel.by_id(params[0])
         channel.change_topic(target, params[1])
 
+
 def mode(target, params):
     if '#' in params[0]:
         channel = Channel.by_id(params[0])
@@ -468,13 +468,14 @@ def names(target, params):
     else:
         _401(target, params[0])
 
+
 def kick(target, params):
     print(params, len(params))
     if len(params) < 2:
         _461(target, 'KICK')
 
     if len(params) == 2:
-        r = '🌹 For fun 🌹' 
+        r = '🌹 For fun 🌹'
     else:
         r = params[2]
 
@@ -491,6 +492,7 @@ def kick(target, params):
             _401(target, params[2])
     else:
         _401(target, params[1])
+
 
 """
     Messages

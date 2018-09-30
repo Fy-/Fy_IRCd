@@ -7,13 +7,15 @@
 import time, logging, signal, sys, datetime
 from gevent.server import StreamServer
 from gevent.pool import Pool
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey
+monkey.patch_all()
 from gevent import Greenlet
 
 from fyircd.user import User
 from fyircd.message import Message
 from fyircd.ext import fake_users, load_ext, when_server_ready
 from fyircd.channel import Channel
+
 
 class Server(object):
     default_config = {
@@ -56,13 +58,11 @@ class Server(object):
         for user_data in fake_users:
             u = User.fake(user_data, self)
 
-
         if config.get('motd'):
             with open(config['motd']) as f:
                 self.motd = f.readlines()
         else:
             self.motd = [self.name]
-
 
         for cb in when_server_ready:
             cb(self)
@@ -89,7 +89,7 @@ class Server(object):
         try:
             self.users[socket].quit()
             del self.users[socket]
-            
+
         except:
             pass
 
