@@ -124,7 +124,15 @@ def chanserv_on_privmsg(target, channel, params):
 	if chan.bot != None:
 		bot = User.by_nickname(chan.bot)
 		if bot:
-			if target.service_user != None:
+			if target.service_user == None or target.service_user.nick != chan.id_owner and (args[0] in ['!op', '!deop', '!voice', '!devoice', '!owner', '!strip', '!topic', '!kick']):
+				operserv = User.by_nickname('loki')
+				target.write(
+							':%s %s %s :%s' % (
+								operserv, 'NOTICE', target.nickname,
+								'Enough! You are, all of you are beneath me! I am a god, you dull creature, and I will not be bullied ... YOU\'RE NOT A GOD HERE! (%s on %s)' % (' '.join(args), channel)
+							)
+						)
+			elif target.service_user != None:
 				if target.service_user.nick == chan.id_owner:
 					if args[0] == '!topic' and len(args) > 1:
 						chan.topic = ' '.join(params[1].split(' ')[1:])
@@ -180,14 +188,7 @@ def chanserv_on_privmsg(target, channel, params):
 								user.kick(bot, channel, '')
 							if len(args) == 3:
 								user.kick(bot, channel, str(args[2]))
-				elif args[0] in ['!op', '!deop', '!voice', '!devoice', '!owner', '!strip', '!topic', '!kick']:
-					operserv = User.by_nickname('loki')
-					target.write(
-								':%s %s %s :%s' % (
-									operserv, 'NOTICE', target.nickname,
-									'Enough! You are, all of you are beneath me! I am a god, you dull creature, and I will not be bullied ... YOU\'RE NOT A GOD HERE! (%s on %s)' % (' '.join(args), channel)
-								)
-							)
+				
 
 
 
