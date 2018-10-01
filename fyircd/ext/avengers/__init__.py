@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, synonym, Session
-
+import os, random
 from fyircd.ext import add_fake_user, add_user_privmsg_callback, add_chan_privmsg_callback, on_server_ready, on_create_chan
 from fyircd.user import User
 from fyircd.channel import Channel
@@ -28,7 +28,12 @@ bot_list = [
 	'WarMachine', 'Logan'
 ]
 bot_list_lower = [v.lower() for v in bot_list]
+deadpool_quotes_file = os.path.join(os.path.dirname(__file__), 'data', 'deadpool.txt')
+with open(deadpool_quotes_file) as f:
+	deadpool_quotes = f.readlines()
 
+def get_random_deadpool_quote():
+	return random.choice(deadpool_quotes)
 
 class AvengerUser(Base):
 	__tablename__ = 'user'
@@ -124,6 +129,12 @@ def chanserv_on_privmsg(target, channel, params):
 	if chan.bot != None:
 		bot = User.by_nickname(chan.bot)
 		if bot:
+			#: public
+			if args[0] == '!quote':
+						if chan.bot == 'deadpool':
+							channel.write(':%s %s %s :%s' % (bot, 'PRIVMSG', channel.name, get_random_deadpool_quote()))
+
+
 			if (target.service_user == None or target.service_user.nick != chan.id_owner) and (args[0].lower() in ['!op', '!deop', '!voice', '!devoice', '!owner', '!strip', '!topic', '!kick']):
 				operserv = User.by_nickname('loki')
 				target.write(
@@ -132,7 +143,11 @@ def chanserv_on_privmsg(target, channel, params):
 								'Enough! You are, all of you are beneath me! I am a god, you dull creature, and I will not be bullied ... YOU\'RE NOT A GOD HERE! (%s on %s)' % (' '.join(args), channel)
 							)
 						)
+
+
 			elif target.service_user != None:
+				
+				#: admin
 				if target.service_user.nick == chan.id_owner:
 					if args[0] == '!topic' and len(args) > 1:
 						chan.topic = ' '.join(params[1].split(' ')[1:])
@@ -188,9 +203,6 @@ def chanserv_on_privmsg(target, channel, params):
 								user.kick(bot, channel, '')
 							if len(args) == 3:
 								user.kick(bot, channel, str(args[2]))
-				
-
-
 
 
 def _operserv(target, params):
