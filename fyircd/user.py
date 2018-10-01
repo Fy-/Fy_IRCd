@@ -76,20 +76,18 @@ class User(object):
 			return User.by_nick[nick.lower()]
 		return False
 
-	def __init__(self, socket, address, server, data=False):
+	def __init__(self, socket_file, address, server, data=False):
 
 		self.server = server
 		self.logger = logging.getLogger('fyircd')
 
 		if not data:
 			self.ip = address[0]
-			self.socket = socket
-			self.socket_file = socket.makefile('rbw', -1)
+			self.socket_file = socket_file
 			self.fake = False
-			self.logger.info('*** New user: {1} / {0}'.format(socket, address[0]))
+			self.logger.info('*** New user: {1} / {0}'.format(socket_file, address[0]))
 		else:
 			self.fake = True
-			self.socket = uuid.uuid4()
 			
 		self.modes = UserModes(self)
 		self.channels = set()
@@ -124,7 +122,7 @@ class User(object):
 			self.hostname = data['hostname']
 			self.username = data['nickname']
 			self.greet = True
-			self.logger.info('*** New fake user: {0} / {1}'.format(self.socket, self.nickname))
+			self.logger.info('*** New fake user: {0}'.format(self.nickname))
 			User.by_nick[self.nickname.lower()] = self
 
 		elif not self.fake:
@@ -178,7 +176,7 @@ class User(object):
 
 	#: disconnect the user close the socket.
 	def disconnect(self):
-		if not self.disconnected:
+		if not self.disconnected and self.fake == False:
 			self.disconnected = True
 
 			for channel in self.channels:
@@ -193,8 +191,10 @@ class User(object):
 				del User.by_nick[self.nickname.lower()]
 
 			
-			self.socket.shutdown(gevent.socket.SHUT_WR)
-			self.socket.close()
+			if self.socket_file != None:
+				#self.socket_file.close()
+				pass
+
 			self.logger.info('*** User disconnected: %s', self.nickname)
 
 	#: join a channel
@@ -253,7 +253,7 @@ class User(object):
 	#: raw writing
 	def write(self, data):
 		if not self.fake and self.disconnected == False:
-			print('>>>>>>>>>', '{0}\r\n'.format(data))
+			#print('>>>>>>>>>', '{0}\r\n'.format(data))
 			self.socket_file.write(bytes('{0}\r\n'.format(data), 'utf-8'))
 			self.socket_file.flush()
 			

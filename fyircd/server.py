@@ -11,6 +11,7 @@ from gevent import monkey
 monkey.patch_all()
 from gevent import Greenlet
 from gevent import sleep
+from gevent import socket
 
 from fyircd.user import User
 from fyircd.message import Message
@@ -25,7 +26,12 @@ def decode_irc(bytes):
         try:
             text = bytes.decode('iso-8859-1')
         except UnicodeDecodeError:
-            text = bytes.decode('cp1252')
+            try:
+                text = bytes.decode('cp1252')
+            except:
+                text = str(bytes)
+
+
     return text
 
 
@@ -72,19 +78,17 @@ class Server(object):
         for cb in when_server_ready:
             cb(self)
 
-    def handle(self, socket, address):
-
-        user = User(socket, address, self)
-        #: gevent.Greenlet.spawn(Server.is_alive, socket)
-        #: gevent.Greenlet.spawn(Server.update, socket) gevent.sleep(5)
+    def handle(self, _socket, address):
+        rfileobj = _socket.makefile(mode='rbwb')
+        user = User(rfileobj, address, self)
+        #: gevent.Greenlet.spawn(Server.is_alive, _socket)
+        #: gevent.Greenlet.spawn(Server.update, _socket) gevent.sleep(5)
         #: gevent.Greenlet.spawn(self.update, user)
         while True:
-            try:
-                line = user.socket_file.readline()
-            except:
+            
+            line = rfileobj.readline()
+            if not line:
                 break
-
-            print('<<<<<<<<< :: {0}'.format(line))
 
             line = decode_irc(line)
             user.update(line)
@@ -92,8 +96,18 @@ class Server(object):
             message = Message(user, raw=raw, params=params)
 
         user.quit('Write error: Connection reset by peer')
+        rfileobj.close()
+        _socket.shutdown(socket.SHUT_WR)
+        _socket.close()
 
     def update_all(self):
+        _users = [
+            user for user in User.by_nick.values()
+            if user.fake == False and user.greet == True and user.socket == None
+        ]
+        for user in _users:
+            user.quit('Socket close')
+
         _users = [
             user for user in User.by_nick.values()
             if user.fake == False and user.greet == True and (time.time() - user.ping) > self.ping_timeout
