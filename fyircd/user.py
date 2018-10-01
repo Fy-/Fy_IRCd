@@ -93,7 +93,7 @@ class User(object):
 		if not data:
 			self.ip = address[0]
 			self.socket = socket
-			self.socket_file = socket.makefile('rw')
+			self.socket_file = socket.makefile('rw', encoding='utf-8')
 			self.fake = False
 			self.logger.info('*** New user: {1} / {0}'.format(socket, address[0]))
 		else:

@@ -124,7 +124,7 @@ def chanserv_on_privmsg(target, channel, params):
 	if chan.bot != None:
 		bot = User.by_nickname(chan.bot)
 		if bot:
-			if target.service_user == None or target.service_user.nick != chan.id_owner and (args[0] in ['!op', '!deop', '!voice', '!devoice', '!owner', '!strip', '!topic', '!kick']):
+			if (target.service_user == None or target.service_user.nick != chan.id_owner) and (args[0].lower() in ['!op', '!deop', '!voice', '!devoice', '!owner', '!strip', '!topic', '!kick']):
 				operserv = User.by_nickname('loki')
 				target.write(
 							':%s %s %s :%s' % (
