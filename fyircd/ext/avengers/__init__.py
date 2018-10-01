@@ -174,6 +174,10 @@ def chanserv_on_privmsg(target, channel, params):
 							user = User.by_nickname(args[1])
 							if user:
 								channel.modes.add(bot, ['', '+v', user.nickname])
+					elif args[0] == '!vall':
+						if len(args) == 1:
+							for user in channel.users:
+								channel.modes.add(bot, ['', '+v', user.nickname])
 					elif args[0] == '!devoice':
 						if len(args) == 1:
 							channel.modes.add(bot, ['', '-v', target.nickname])

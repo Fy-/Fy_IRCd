@@ -8,7 +8,6 @@
 import fyircd.raw as raw
 
 
-
 class Message(object):
     def __init__(self, target, raw, params):
         self.raw = raw.lower()
@@ -51,4 +50,4 @@ class Message(object):
                 else:
                     args = x[1].split(' ')
 
-        return (command, args)
+            return (command, args)
