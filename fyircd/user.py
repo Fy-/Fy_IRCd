@@ -11,15 +11,6 @@ import gevent
 import uuid
 import hashlib
 
-
-def to_str(bytes_or_str):
-	if isinstance(bytes_or_str, bytes):
-		value = bytes_or_str.decode()  # uses 'utf-8' for encoding
-	else:
-		value = bytes_or_str
-	return value  # Instance of str
-
-
 class UserModes(object):
 	supported_modes = {
 		# https://github.com/LukeB42/psyrcd/blob/master/psyrcd.py - Uppercase modes are oper-only
@@ -43,7 +34,7 @@ class UserModes(object):
 	}
 
 	def __init__(self, user):
-		self.data = {'x': 1}
+		self.data = {'x': 1, 'r' : 0}
 		self.user = user
 
 	@staticmethod
@@ -93,7 +84,7 @@ class User(object):
 		if not data:
 			self.ip = address[0]
 			self.socket = socket
-			self.socket_file = socket.makefile('rw', encoding='utf-8')
+			self.socket_file = socket.makefile('rbw', -1)
 			self.fake = False
 			self.logger.info('*** New user: {1} / {0}'.format(socket, address[0]))
 		else:
@@ -162,7 +153,6 @@ class User(object):
 
 	#: used for idle & exts.
 	def update(self, line):
-
 		if 'PONG :' not in line:
 			self.idle = int(time.time())
 
@@ -264,11 +254,9 @@ class User(object):
 	def write(self, data):
 		if not self.fake and self.disconnected == False:
 			print('>>>>>>>>>', '{0}\r\n'.format(data))
-			try:
-				self.socket_file.write(to_str('{0}\r\n'.format(str(data))))
-				self.socket_file.flush()
-			except:
-				self.quit('Broken pipe - (While writing - user.write)')
+			self.socket_file.write(bytes('{0}\r\n'.format(data), 'utf-8'))
+			self.socket_file.flush()
+			
 			
 
 

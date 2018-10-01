@@ -8,6 +8,7 @@
 import fyircd.raw as raw
 
 
+
 class Message(object):
     def __init__(self, target, raw, params):
         self.raw = raw.lower()

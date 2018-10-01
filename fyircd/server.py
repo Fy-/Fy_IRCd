@@ -18,6 +18,17 @@ from fyircd.ext import fake_users, load_ext, when_server_ready
 from fyircd.channel import Channel
 
 
+def decode_irc(bytes):
+    try:
+        text = bytes.decode('utf-8')
+    except UnicodeDecodeError:
+        try:
+            text = bytes.decode('iso-8859-1')
+        except UnicodeDecodeError:
+            text = bytes.decode('cp1252')
+    return text
+
+
 class Server(object):
     default_config = {
         'secret_key': None,
@@ -74,6 +85,8 @@ class Server(object):
                 break
 
             print('<<<<<<<<< :: {0}'.format(line))
+
+            line = decode_irc(line)
             user.update(line)
             raw, params = Message.from_string(line)
             message = Message(user, raw=raw, params=params)
