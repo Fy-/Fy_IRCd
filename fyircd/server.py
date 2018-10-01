@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-    fyircd.server
-    ~~~~~~~~~~~~~~~~
-    :license: BSD, see LICENSE for more details.
+	fyircd.server
+	~~~~~~~~~~~~~~~~
+	:license: BSD, see LICENSE for more details.
 """
 import time, logging, signal, sys, datetime
 from gevent.server import StreamServer
@@ -10,6 +10,7 @@ from gevent.pool import Pool
 from gevent import monkey
 monkey.patch_all()
 from gevent import Greenlet
+from gevent import sleep
 
 from fyircd.user import User
 from fyircd.message import Message
@@ -42,15 +43,8 @@ class Server(object):
         self.logger = logging.getLogger('fyircd')
         self.created = datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
 
-        self.users = {}
-
         self.services = []
         self.host_cache = {}
-
-        #self.before_message_funcs = {}
-        #self.after_message_funcs = {}
-        #self.on_connect_funcs = {}
-        #self.on_disconnect_funcs = {}
 
         for ext in config.get('exts'):
             load_ext(ext)
@@ -68,53 +62,61 @@ class Server(object):
             cb(self)
 
     def handle(self, socket, address):
+
         user = User(socket, address, self)
         #: gevent.Greenlet.spawn(Server.is_alive, socket)
         #: gevent.Greenlet.spawn(Server.update, socket) gevent.sleep(5)
+        #: gevent.Greenlet.spawn(self.update, user)
         while True:
             try:
                 line = user.socket_file.readline()
             except:
                 break
 
-            if not line:
-                user.quit('Write error: Connection reset by peer')
-                break
-            else:
-                print('<<<<<<<<< :: {0}'.format(line))
-                user.update(line)
-                raw, params = Message.from_string(line)
-                message = Message(user, raw=raw, params=params)
-
-        try:
-            self.users[socket].quit()
-            del self.users[socket]
-
-        except:
-            pass
+            print('<<<<<<<<< :: {0}'.format(line))
+            user.update(line)
+            raw, params = Message.from_string(line)
+            message = Message(user, raw=raw, params=params)
 
         user.quit('Write error: Connection reset by peer')
 
-    '''
-    def update(self):
-        _users = [user for user in self.users.values() if (time.time() - user.ping) > self.ping_timeout]
+    def update_all(self):
+        _users = [
+            user for user in User.by_nick.values()
+            if user.fake == False and user.greet == True and (time.time() - user.ping) > self.ping_timeout
+        ]
         for user in _users:
             user.quit('Ping timeout: {0}'.format(int(time.time() - user.ping)))
 
         half_timeout = self.ping_timeout / 2.0
-        _users = [user for user in self.users if (time.time() - user.ping) > half_timeout]
+
+        _users = [
+            user for user in User.by_nick.values()
+            if user.fake == False and user.greet == True and (time.time() - user.ping) > half_timeout
+        ]
         for user in _users:
-            try:
-                # send ping
-                pass
-            except socket.error:
-                user.quit("Write error: Connection reset by peer")
-    '''
+            user.write('PING :%s' % (self.name))
+
+        sleep(5)
 
     def signal_handler(self, signum, frame):
         self.logger.info('Stoping FyIRCd ... Byebye.')
+        if 'avengers' in self.config.get('exts'):
+            operserv = User.by_nickname('loki')
+            _users = User.by_nick.copy()
+
+            for user in _users.values():
+                if user.fake == False and user.greet:
+                    user.write(
+                        ':%s %s %s :%s' % (
+                            operserv, 'NOTICE', user.nickname,
+                            'The world is ending ... it\'s possible it\'s just a restart... FyIRCd is not stable ^_^ https://github.com/Fy-/Fy_IRCd'
+                        )
+                    )
+                    user.quit('The world is ending')
+
         if self.server:
-            self.server.close()
+            self.server.stop()
 
         sys.exit(0)
 
@@ -123,6 +125,7 @@ class Server(object):
 
         self.pool = Pool(10000)
 
+        Greenlet.spawn(self.update_all)
         self.server = StreamServer((self.host, self.port), self.handle, spawn=self.pool)
 
         self.logger.info('Starting FyIRCd on {0}:{1}'.format(self.host, self.port))

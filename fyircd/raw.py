@@ -125,7 +125,7 @@ def users(target, params):
     #todo max :target.send('265 %s %s %s :Current local users %s, max %s')
     target.send(
         '265 %s %s :Current local users %s' %
-        (target.nickname, len(len(target.server.users)), len(target.server.users))
+        (target.nickname, len(len(User.by_nick)), len(User.by_nick))
     )
 
 
@@ -177,7 +177,7 @@ def _welcome(target):
 
         target.send(
             '251 %s :%s :There is %s users on %s' %
-            (target.nickname, target.nickname, len(target.server.users), target.server.name)
+            (target.nickname, target.nickname, len(User.by_nick), target.server.name)
         )
         target.send(
             '254 %s :%s :There is %s channels on %s' %
@@ -489,7 +489,7 @@ def kick(target, params):
             else:
                 _482(target, channel)
         else:
-            _401(target, params[2])
+            _401(target, params[1])
     else:
         _401(target, params[1])
 
