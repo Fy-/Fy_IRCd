@@ -1,7 +1,9 @@
 FyIRCd
 ======
 
-One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground. (Dev server home.fy.to:6667)
+One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground. 
+
+**You can join my home irc server /server home.fy.to:6667 :D**
 
 # Install & Run FyIRCd
 1. git clone https://github.com/Fy-/FyIRCd.git
