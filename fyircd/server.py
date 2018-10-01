@@ -10,7 +10,7 @@ from gevent.pool import Pool
 from gevent import monkey
 monkey.patch_all()
 from gevent import Greenlet
-from gevent import sleep
+from gevent import sleep as gsleep
 from gevent import socket
 
 from fyircd.user import User
@@ -100,31 +100,28 @@ class Server(object):
         _socket.shutdown(socket.SHUT_WR)
         _socket.close()
 
-    def update_all(self):
-        _users = [
-            user for user in User.by_nick.values()
-            if user.fake == False and user.greet == True and user.socket == None
-        ]
-        for user in _users:
-            user.quit('Socket close')
+    @staticmethod
+    def update_all(server):
+        while 1:
+            server.logger.info('update_all - check pings and timeouts...')
 
-        _users = [
-            user for user in User.by_nick.values()
-            if user.fake == False and user.greet == True and (time.time() - user.ping) > self.ping_timeout
-        ]
-        for user in _users:
-            user.quit('Ping timeout: {0}'.format(int(time.time() - user.ping)))
+            _users = [
+                user for user in User.by_nick.values()
+                if user.fake == False and user.greet == True and (time.time() - user.ping) > server.ping_timeout
+            ]
+            for user in _users:
+                user.quit('Ping timeout: {0}'.format(int(time.time() - user.ping)))
 
-        half_timeout = self.ping_timeout / 2.0
+            half_timeout = server.ping_timeout / 2.0
 
-        _users = [
-            user for user in User.by_nick.values()
-            if user.fake == False and user.greet == True and (time.time() - user.ping) > half_timeout
-        ]
-        for user in _users:
-            user.write('PING :%s' % (self.name))
+            _users = [
+                user for user in User.by_nick.values()
+                if user.fake == False and user.greet == True and (time.time() - user.ping) > half_timeout
+            ]
+            for user in _users:
+                user.write('PING :%s' % (server.name))
 
-        sleep(5)
+            gsleep(10)
 
     def signal_handler(self, signum, frame):
         self.logger.info('Stoping FyIRCd ... Byebye.')
@@ -152,7 +149,7 @@ class Server(object):
 
         self.pool = Pool(10000)
 
-        Greenlet.spawn(self.update_all)
+        Greenlet.spawn(Server.update_all, self)
         self.server = StreamServer((self.host, self.port), self.handle, spawn=self.pool)
 
         self.logger.info('Starting FyIRCd on {0}:{1}'.format(self.host, self.port))
