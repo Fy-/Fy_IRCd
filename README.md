@@ -1,5 +1,26 @@
-FyIRCd
+FyIRCd :: NEW VERSION HERE: https://github.com/Fy-/domino 
 ======
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 One day maybe FyIRCd will be a full-featured IRC server, for now it's just a playground. 
 Please don't be to hard on my code, this was made in 2 days <3
